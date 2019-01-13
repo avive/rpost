@@ -9,7 +9,7 @@ import (
 // Returns a an int representing l 1 bits.
 func GetSimpleMask(l uint) *big.Int {
 	mask := big.NewInt(0)
-	for x:=0; x < int(l); x++ {
+	for x := 0; x < int(l); x++ {
 		mask = mask.SetBit(mask, x, 1)
 	}
 	return mask
@@ -40,8 +40,8 @@ func GetProbability(l uint) float64 {
 // clear the l msb bits of data considered as a big endian int
 func clearMsbBits(l uint, data []byte) *big.Int {
 	z := new(big.Int).SetBytes(data)
-	firstBitIdx := len(data) * 8 - int(l)
-	lastBitIdx := len(data) * 8 - 1
+	firstBitIdx := len(data)*8 - int(l)
+	lastBitIdx := len(data)*8 - 1
 
 	for i := firstBitIdx; i <= lastBitIdx; i++ {
 		z = z.SetBit(z, i, 0)

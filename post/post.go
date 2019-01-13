@@ -10,7 +10,10 @@ import (
 	"os"
 )
 
-const fileBuffSizeBytes = 1024 * 1024 * 1024
+const (
+	fileBuffSizeBytes = 1024 * 1024 * 1024
+	k                 = 256 // this can't be modified and is set as it is the bit length of the output of sha256()
+)
 
 type Table struct {
 	id       []byte          // initial commitment
@@ -66,7 +69,7 @@ func (t *Table) Generate() error {
 	fmt.Printf("Store mask bit field : %d %b\n", storeMask, storeMask)
 
 	m := GetMask(32, t.l)
-	fmt.Printf("Mask : %s\n", m.String() )
+	fmt.Printf("Mask : %s\n", m.String())
 
 	iBuf := make([]byte, 10)
 	nonce := big.NewInt(0)

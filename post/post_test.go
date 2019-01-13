@@ -19,8 +19,8 @@ func TestPost(t *testing.T) {
 	_, err := rand.Read(id)
 	assert.NoError(t, err)
 
-	n := uint64(6) // in bits. table size. T=2^n
-	l := uint(20)   // in bits. difficulty. also # of nonce bits to store
+	n := uint64(6)              // in bits. table size. T=2^n
+	l := uint(20)               // in bits. difficulty. also # of nonce bits to store
 	h := shared.NewHashFunc(id) // H(id) to be used for ipow
 
 	table, err := NewTable(id, n, l, h, f)
