@@ -2,12 +2,12 @@ package post
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"github.com/avive/rpost/shared"
-	"github.com/icza/bitio"
 	"math"
 	"math/big"
-	"os"
+	"math/bits"
 )
 
 const (
@@ -16,53 +16,64 @@ const (
 )
 
 type Table struct {
-	id       []byte          // initial commitment
-	n        uint64          // n param 1 <= n <= 63 - table size is 2^n
-	l        uint            // l param (num of leading 0s for p) := f(p). 1: 50%, 2: 25%, 3:12.5%...
-	h        shared.HashFunc // Hx()
-	filePath string          // disk store data file path + name
-	file     *os.File        // file
-	bw       bitio.Writer    // Bitio around file writer
+	id []byte          // initial commitment
+	n  uint64          // n param 1 <= n <= 63 - table size is 2^n
+	l  uint            // l param (num of leading 0s for p) := f(p). 1: 50%, 2: 25%, 3:12.5%...
+	h  shared.HashFunc // Hx()
+	s  StoreWriter
 }
 
 // Create a new prover with commitment X and param 1 <= n <= 63
 func NewTable(id []byte, n uint64, l uint, h shared.HashFunc, filePath string) (*Table, error) {
 
-	f, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	fmt.Printf("Store file: %s\n", filePath)
+
+	store, err := NewStoreWriter(filePath, l)
 	if err != nil {
 		return nil, err
+
 	}
-
-	table := Table{id, n, l, h, filePath, f, nil}
-
-	// buffered io around a file
-	// w := internal.NewWriterSize(f, fileBuffSizeBytes)
-
-	// bit writer around the file
-	table.bw = bitio.NewWriter(f)
-
+	table := Table{id, n, l, h, store}
 	return &table, nil
 }
 
 var bigOne = big.NewInt(1)
+
+// var maxNonce = GetMaxNonce(256)
+
+// Implements the Store phase of rpost (page 9)
+func (t *Table) Store() error {
+
+	// 1. Generate and store the values of the iPoW table G
+	return t.Generate()
+
+	// 2. Compute commitment com on G (root of merkle tree where G data are leaves
+}
 
 func (t *Table) Generate() error {
 
 	n := uint64(math.Pow(2, float64(t.n)))
 	fmt.Printf("Table size: %d \n", n)
 
+	// p*
+	phi := k / float64(n)
+	fmt.Printf("P*: %f \n", phi)
+
 	// compute probability in (0...1)
 	p := GetProbability(t.l)
 	fmt.Printf("Difficulty p: %.30f\n", p)
 
-	fmt.Printf("Commitment x: 0x%x\n", t.id)
-	fmt.Printf("Store file: %s\n", t.filePath)
+	fmt.Printf("Expected hashes to find a digest is at least : %d \n", int(1/p))
 
-	// TODO: bits to store is equals t.l - verify with tal
-	// number of bites to store per hash
-	// bits := uint(math.Ceil(math.Log2(1 / p)))
-	// fmt.Printf("Nonce of bits to store : %d\n", bits)
+	maxNonceVal := big.NewInt(int64(math.Ceil(k / p)))
+	fmt.Printf("Max permitted nonce: %s\n", maxNonceVal.String())
+
+	fmt.Printf("Commitment x: 0x%x\n", t.id)
+
+	// number of bites to store per hash is ame as l
+	//bits := uint(math.Ceil(math.Log2(1 / p))) === t.l
 	fmt.Printf("Number of nonce bits to store : %d\n", t.l)
+	fmt.Printf("Difficulty param : %d\n", t.l)
 
 	// create a bit mask of t.l bits set to 1
 	storeMask := GetSimpleMask(t.l)
@@ -75,10 +86,9 @@ func (t *Table) Generate() error {
 	nonce := big.NewInt(0)
 	d := new(big.Int)
 
-	// todo: uint64 maxVal is 18446744073709551615 - is this ok or do we need to iterate over a 256bits big int here?
 	for i := uint64(0); i < n; i++ {
 
-		// nonce is in {0,1}^log(k/p) ????
+		// nonce is in {0,1}^log(k/p) - max nonce value is k/p
 		nonce = nonce.SetUint64(0)
 		ln := binary.PutUvarint(iBuf, i)
 
@@ -90,12 +100,13 @@ func (t *Table) Generate() error {
 			if d.Cmp(m) == -1 { // H(id, i, x) < p
 				fmt.Printf(" Nonce: %d %b - digest: 0x%x\n", nonce.Uint64(), nonce.Uint64(), digest)
 
-				// Pull exactly l lsb bits from nonce and store as uint64
+				// Pull up to l lsb bits from nonce and store as uint64
 				data := nonce.And(nonce, storeMask).Uint64()
-				fmt.Printf("Data (%d lsb bits of nonce): %d %b \n", t.l, data, data)
+
+				fmt.Printf("Data (%d lsb bits of nonce): %d %b bits:%d \n", t.l, data, data, bits.Len64(data))
 
 				// Write the data to the file
-				err := t.bw.WriteBits(data, byte(t.l))
+				err := t.s.Write(data, byte(t.l))
 				if err != nil {
 					return err
 				}
@@ -103,6 +114,11 @@ func (t *Table) Generate() error {
 			}
 
 			nonce = nonce.Add(nonce, bigOne)
+
+			if nonce.Cmp(maxNonceVal) == 1 {
+				// nonce overflow case. We expect nonce to be up to ceil(k/p)
+				return errors.New("failed to find nonce in permitted range")
+			}
 		}
 	}
 
@@ -110,5 +126,5 @@ func (t *Table) Generate() error {
 }
 
 func (t *Table) finalize() error {
-	return t.bw.Close()
+	return t.s.Close()
 }

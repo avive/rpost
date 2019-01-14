@@ -1,10 +1,49 @@
 package post
 
 import (
+	"github.com/Workiva/go-datastructures/bitarray"
+	"math"
 	"math/big"
+	"strings"
 )
 
 // POST math utils funcs
+
+// Get the bool value of the nth bit of a value of a byte
+// bit is defined from right to left so the LSB bit is at 0 and the MSB it is at 7.
+// e.g. byte is bits at indexes [7|6|5|4|3|2|1|0] and 0x1 is 00000001, 0x2 is 00000010
+
+func GetNthBit(b byte, bit uint64) bool {
+	return  b & byte(math.Pow(2, float64(bit))) != 0
+}
+
+// Get string reprsentation of a BitArray
+func String(b bitarray.BitArray, size uint64) (string, error) {
+	var sb strings.Builder
+	for i := uint64(0); i < size; i++ {
+		bit, err := b.GetBit(i)
+		if err != nil {
+			return "", err
+		}
+
+		if bit == false {
+			sb.WriteString("0")
+		} else {
+			sb.WriteString("1")
+		}
+	}
+	return sb.String(), nil
+}
+
+// Returns the max nonce that is l bits long.
+// e.g. for l=256, nonce should be 2^256-1
+func GetMaxNonce(l int) *big.Int {
+	n := big.NewInt(0)
+	for i := 0; i < l; i++ {
+		n = n.SetBit(n, i, 1)
+	}
+	return n
+}
 
 // Returns a an int representing l 1 bits.
 func GetSimpleMask(l uint) *big.Int {

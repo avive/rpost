@@ -1,6 +1,8 @@
 package post
 
 import (
+	"fmt"
+	"github.com/Workiva/go-datastructures/bitarray"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
@@ -57,10 +59,10 @@ func TestGetProbability(t *testing.T) {
 }
 
 func TestAll(t *testing.T) {
-	testclearMSBBits(t)
+	testClearMsbBits(t)
 }
 
-func testclearMSBBits(t *testing.T) {
+func testClearMsbBits(t *testing.T) {
 	mask := big.NewInt(0xffff)
 	z := clearMsbBits(1, mask.Bytes())
 	assert.Equal(t, uint64(32767), z.Uint64())
@@ -71,4 +73,35 @@ func testclearMSBBits(t *testing.T) {
 	mask = big.NewInt(0xffffffff)
 	z = clearMsbBits(8, mask.Bytes())
 	assert.Equal(t, uint64(0xffffff), z.Uint64())
+}
+
+func TestGetMaxNonce(t *testing.T) {
+	n := GetMaxNonce(256)
+	s := fmt.Sprintf("%x", n)
+	assert.Equal(t, "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", s)
+	// fmt.Printf("%x", n)
+}
+
+func TestBitArrayString(t *testing.T) {
+	b := bitarray.NewBitArray(20, false)
+	err := b.SetBit(0)
+	assert.NoError(t, err)
+
+	err = b.SetBit(18)
+	assert.NoError(t, err)
+
+	s, err := String(b, 20)
+	assert.NoError(t, err)
+	fmt.Printf(s)
+}
+
+func TestGetNthBit(t *testing.T) {
+	b := byte(1)
+	assert.True(t, GetNthBit(b, 0))
+	assert.False(t, GetNthBit(b, 1))
+
+	b = byte(2)
+	assert.True(t, GetNthBit(b, 1))
+	assert.False(t, GetNthBit(b, 0))
+
 }
