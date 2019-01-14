@@ -11,8 +11,7 @@ import (
 )
 
 const (
-	fileBuffSizeBytes = 1024 * 1024 * 1024
-	k                 = 256 // this can't be modified and is set as it is the bit length of the output of sha256()
+	k = 256 // this can't be modified and is set as it is the bit length of the output of sha256()
 )
 
 type Table struct {
@@ -23,8 +22,12 @@ type Table struct {
 	s  StoreWriter
 }
 
-// Create a new prover with commitment X and param 1 <= n <= 63
+// Create a new prover with commitment X and param
+// n:= 1 <= n <= 63
+// l:= 1 <= l <= 63
 func NewTable(id []byte, n uint64, l uint, h shared.HashFunc, filePath string) (*Table, error) {
+
+	// todo: check precondition args values here
 
 	fmt.Printf("Store file: %s\n", filePath)
 
@@ -37,7 +40,7 @@ func NewTable(id []byte, n uint64, l uint, h shared.HashFunc, filePath string) (
 	return &table, nil
 }
 
-var bigOne = big.NewInt(1)
+var one = big.NewInt(1)
 
 // var maxNonce = GetMaxNonce(256)
 
@@ -45,12 +48,13 @@ var bigOne = big.NewInt(1)
 func (t *Table) Store() error {
 
 	// 1. Generate and store the values of the iPoW table G
-	return t.Generate()
+	err, _ := t.Generate(false)
+	return err
 
-	// 2. Compute commitment com on G (root of merkle tree where G data are leaves
+	// todo: 2. Compute commitment com on G (root of Merkle tree where G data are leaves
 }
 
-func (t *Table) Generate() error {
+func (t *Table) Generate(returnData bool) (error, []uint64) {
 
 	n := uint64(math.Pow(2, float64(t.n)))
 	fmt.Printf("Table size: %d \n", n)
@@ -86,6 +90,8 @@ func (t *Table) Generate() error {
 	nonce := big.NewInt(0)
 	d := new(big.Int)
 
+	var res []uint64
+
 	for i := uint64(0); i < n; i++ {
 
 		// nonce is in {0,1}^log(k/p) - max nonce value is k/p
@@ -100,29 +106,37 @@ func (t *Table) Generate() error {
 			if d.Cmp(m) == -1 { // H(id, i, x) < p
 				fmt.Printf(" Nonce: %d %b - digest: 0x%x\n", nonce.Uint64(), nonce.Uint64(), digest)
 
-				// Pull up to l lsb bits from nonce and store as uint64
+				// Take l lsb bits from nonce and store as uint64
 				data := nonce.And(nonce, storeMask).Uint64()
 
 				fmt.Printf("Data (%d lsb bits of nonce): %d %b bits:%d \n", t.l, data, data, bits.Len64(data))
 
-				// Write the data to the file
+				// Write the data to the file - exactly t.l lsb bits of data
+				// if t.l > len(data) then 0s are padded starting MSB bit
+				// so, for example, if len(data) = 16 and t.l = 20, 4 leading 0s will be written starting at MSB bit (left-to-right)
+				// and the 16 bits of data next using big-endian encoding. e.g. MSB bit first...
 				err := t.s.Write(data, byte(t.l))
 				if err != nil {
-					return err
+					return err, nil
 				}
+
+				if returnData {
+					res = append(res, data)
+				}
+
 				break
 			}
 
-			nonce = nonce.Add(nonce, bigOne)
+			nonce = nonce.Add(nonce, one)
 
 			if nonce.Cmp(maxNonceVal) == 1 {
 				// nonce overflow case. We expect nonce to be up to ceil(k/p)
-				return errors.New("failed to find nonce in permitted range")
+				return errors.New("failed to find nonce in permitted range"), nil
 			}
 		}
 	}
 
-	return t.finalize()
+	return t.finalize(), res
 }
 
 func (t *Table) finalize() error {

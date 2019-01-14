@@ -12,12 +12,29 @@ import (
 // Get the bool value of the nth bit of a value of a byte
 // bit is defined from right to left so the LSB bit is at 0 and the MSB it is at 7.
 // e.g. byte is bits at indexes [7|6|5|4|3|2|1|0] and 0x1 is 00000001, 0x2 is 00000010
-
 func GetNthBit(b byte, bit uint64) bool {
-	return  b & byte(math.Pow(2, float64(bit))) != 0
+	return b&byte(math.Pow(2, float64(bit))) != 0
 }
 
-// Get string reprsentation of a BitArray
+// Decode a big-endian uint64 from its binary encoding of up to length bits
+func Uint64Value(b bitarray.BitArray, length uint64) (uint64, error) {
+	res := uint64(0)
+
+	for i := uint64(0); i < length; i++ {
+		bit, err := b.GetBit(i)
+		if err != nil {
+			return 0, err
+		}
+		res <<= 1
+		if bit {
+			res |= 1
+		}
+	}
+
+	return res, nil
+}
+
+// Get string representation of a BitArray
 func String(b bitarray.BitArray, size uint64) (string, error) {
 	var sb strings.Builder
 	for i := uint64(0); i < size; i++ {

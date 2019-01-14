@@ -8,12 +8,14 @@ import (
 	"os"
 )
 
+// StoreWriter is a serial writer that appends data to the file
 type StoreWriter interface {
 	Write(r uint64, n byte) error
 	WriteBool(b bool) error
 	Close() error
 }
 
+// SotreReader is a random access reader capable of reading data from any valid bit offset
 type StoreReader interface {
 	Read(idx uint64) (bitarray.BitArray, error)
 	Close() error
@@ -72,6 +74,8 @@ func (s *Store) Close() error {
 }
 
 // Read s.n bits at index idx from the store
+// This method can read from any index any number of times. e.g. It is not a classic GO reader which consumes the data it reads
+// We need this for random access into the table when generating a proof for a random challenge...
 func (s *Store) Read(idx uint64) (bitarray.BitArray, error) {
 
 	fmt.Printf("File size in bytes: %d...\n", s.sz)
@@ -123,7 +127,7 @@ func (s *Store) Read(idx uint64) (bitarray.BitArray, error) {
 
 		// read next bit from the buffer
 		// we need to use 7 - o because we assume byte representation of a bit field in the form: [7,6,5,...0]
-		set := GetNthBit(buff[byteIdx], 7 - o)
+		set := GetNthBit(buff[byteIdx], 7-o)
 		if set {
 			// set the bit in the ith index of the result bit array
 			err := res.SetBit(i)

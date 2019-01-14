@@ -97,8 +97,8 @@ func TestBitArrayString(t *testing.T) {
 
 func TestGetNthBit(t *testing.T) {
 	b := byte(1)
-	assert.True(t, GetNthBit(b, 0))
-	assert.False(t, GetNthBit(b, 1))
+	assert.True(t, GetNthBit(b, 0), "expected bit 0 to be set for 0x1")
+	assert.False(t, GetNthBit(b, 1), "expected bit 1 to be 0 for 0x1")
 
 	b = byte(2)
 	assert.True(t, GetNthBit(b, 1))

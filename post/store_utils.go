@@ -28,8 +28,7 @@ func dumpContent(filePath string, lineLength uint) error {
 		}
 		data = data[:n]
 		for _, b := range data {
-			// fmt.Printf("%d %b\n", b, b)
-			for i:= 7; i >= 0; i-- { // read bits from msb to lsb...
+			for i := 7; i >= 0; i-- { // read bits from msb to lsb...
 				bit := GetNthBit(b, uint64(i))
 				if bit {
 					fmt.Print("1")
