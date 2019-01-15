@@ -3,7 +3,7 @@ package main
 import (
 	"crypto/rand"
 	"github.com/avive/rpost/internal"
-	"github.com/avive/rpost/shared"
+	"github.com/avive/rpost/hashing"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -16,7 +16,7 @@ func TestProverAndVerifier(t *testing.T) {
 	_, err := rand.Read(x)
 	assert.NoError(t, err)
 
-	p, err := internal.NewProver(x, n, shared.NewHashFunc(x))
+	p, err := internal.NewProver(x, n, hashing.NewHashFunc(x))
 	defer p.DeleteStore()
 	assert.NoError(t, err, "Failed to create prover.")
 
@@ -33,7 +33,7 @@ func TestProverAndVerifier(t *testing.T) {
 	proof, err := p.GetNonInteractiveProof()
 	assert.NoError(t, err, "Failed to create NIP.")
 
-	v, err := internal.NewVerifier(x, n, shared.NewHashFunc(x))
+	v, err := internal.NewVerifier(x, n, hashing.NewHashFunc(x))
 	assert.NoError(t, err, "Failed to create verifier.")
 
 	a, err := v.VerifyNIP(proof)

@@ -1,4 +1,4 @@
-package shared
+package hashing
 
 import (
 	"golang.org/x/crypto/scrypt"

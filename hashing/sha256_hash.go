@@ -1,4 +1,4 @@
-package shared
+package hashing
 
 import (
 	"github.com/minio/sha256-simd" // simd optimized sha256 computation

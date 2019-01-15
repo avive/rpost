@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"fmt"
-	"github.com/avive/rpost/shared"
+	"github.com/avive/rpost/hashing"
 	"github.com/spacemeshos/sha256-simd"
 	"math"
 	"testing"
@@ -46,7 +46,7 @@ func BenchmarkScrypt(t *testing.B) {
 	}
 
 	n := 1000000
-	hash := shared.NewScryptHashFunc(x)
+	hash := hashing.NewScryptHashFunc(x)
 	fmt.Printf("Computing %d serial scrypts...\n", n)
 	t1 := time.Now().Unix()
 	for i := 0; i < n; i++ {

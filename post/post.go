@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/avive/rpost/shared"
+	"github.com/avive/rpost/hashing"
 	"math"
 	"math/big"
 	"math/bits"
@@ -15,17 +15,17 @@ const (
 )
 
 type Table struct {
-	id []byte          // initial commitment
-	n  uint64          // n param 1 <= n <= 63 - table size is 2^n
-	l  uint            // l param (num of leading 0s for p) := f(p). 1: 50%, 2: 25%, 3:12.5%...
-	h  shared.HashFunc // Hx()
+	id []byte           // initial commitment
+	n  uint64           // n param 1 <= n <= 63 - table size is 2^n
+	l  uint             // l param (num of leading 0s for p) := f(p). 1: 50%, 2: 25%, 3:12.5%...
+	h  hashing.HashFunc // Hx()
 	s  StoreWriter
 }
 
 // Create a new prover with commitment X and param
 // n:= 1 <= n <= 63
 // l:= 1 <= l <= 63
-func NewTable(id []byte, n uint64, l uint, h shared.HashFunc, filePath string) (*Table, error) {
+func NewTable(id []byte, n uint64, l uint, h hashing.HashFunc, filePath string) (*Table, error) {
 
 	// todo: check precondition args values here
 

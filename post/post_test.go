@@ -3,7 +3,7 @@ package post
 import (
 	"crypto/rand"
 	"fmt"
-	"github.com/avive/rpost/shared"
+	"github.com/avive/rpost/hashing"
 	"github.com/stretchr/testify/assert"
 	"math"
 	"os"
@@ -33,7 +33,7 @@ func testPost(t *testing.T, n uint64, l uint) {
 	_, err := rand.Read(id)
 	assert.NoError(t, err)
 
-	h := shared.NewHashFunc(id) // H(id) to be used for iPoW
+	h := hashing.NewHashFunc(id) // H(id) to be used for iPoW
 
 	table, err := NewTable(id, n, l, h, f)
 	assert.NoError(t, err)
