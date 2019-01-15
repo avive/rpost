@@ -9,10 +9,12 @@ import (
 )
 
 const (
-	cacheSize = 500
+	cacheSize       = 500
+	lengthCacheSize = 10
 )
 
-// An immutable variable length binary string with possible leading 0s
+// A BinaryString is an immutable fixed-length binary string
+
 type BinaryString interface {
 
 	// Gets string representation. e.g. "00011"
@@ -37,13 +39,12 @@ type BinaryString interface {
 	IsOdd() bool
 }
 
+// Use this interface to create BinaryStrings
 type BinaryStringFactory interface {
 	NewBinaryString(s string) (BinaryString, error)
 	NewRandomBinaryString(d uint) (BinaryString, error)
 	NewBinaryStringFromInt(v uint64, d uint) (BinaryString, error)
 }
-
-// Fixed-length binary strings
 
 type SMBinaryStringFactory struct {
 	cache  map[uint64]map[uint]*SMBinaryString
@@ -51,7 +52,6 @@ type SMBinaryStringFactory struct {
 }
 
 func NewSMBinaryStringFactory() BinaryStringFactory {
-
 	return &SMBinaryStringFactory{
 		make(map[uint64]map[uint]*SMBinaryString, cacheSize),
 		make(map[string]*SMBinaryString, cacheSize),
@@ -76,6 +76,11 @@ func (f *SMBinaryStringFactory) NewBinaryStringFromInt(v uint64, d uint) (Binary
 		v: v,
 		d: d,
 		f: f,
+	}
+
+	m := f.cache[v][d]
+	if m == nil {
+		f.cache[v] = make(map[uint]*SMBinaryString, lengthCacheSize)
 	}
 
 	f.cache[v][d] = res

@@ -6,9 +6,8 @@ import (
 	"os"
 )
 
-// A simple (k,v) store for storing indexed labels
+// A simple known-size full binary tree (such as a Merkle tree) store
 
-// todo: review these
 const (
 	W             = 256         // label length in bits
 	WB            = 32          // W length in bytes
@@ -18,14 +17,15 @@ const (
 type Label []byte      // label is WB bytes long binary data
 type Labels []Label    // an ordered list of Labels
 type Identifier string // A Variable-length binary string. e.g. "0011010" Only 0s and 1s are allowed chars.
-type WriteData struct {
+
+type Node struct { // a tree node has a label and an identifier
 	id Identifier
 	l  Label
 }
 
-// A simple (k,v) store writer
+// A simple store writer
 // Labels must be written in depth-first order. Random access is not supported
-type IKvStoreWriter interface {
+type IStoreWriter interface {
 	Write(id Identifier, l Label)
 	IsLabelInStore(id Identifier) (bool, error)
 	Reset() error
@@ -36,13 +36,13 @@ type IKvStoreWriter interface {
 }
 
 // A simple (k,v) reader - fully supports random access
-type IKvStoreReader interface {
+type IStoreReader interface {
 	Read(id Identifier) (Label, error)
 	Size() uint64
 	Close() error
 }
 
-type kvFileStore struct {
+type store struct {
 	fileName string
 	file     *os.File
 	n        uint // 1 <= n < 64
@@ -51,9 +51,9 @@ type kvFileStore struct {
 	c        uint64 // num of labels written to store in this session
 }
 
-// n specifies the leafs height from the root
-func NewKvFileStoreWriter(fileName string, n uint) (IKvStoreWriter, error) {
-	res := &kvFileStore{
+// n - binary tree height
+func NewKvFileStoreWriter(fileName string, n uint) (IStoreWriter, error) {
+	res := &store{
 		fileName: fileName,
 		n:        n,
 		f:        NewSMBinaryStringFactory(),
@@ -68,8 +68,8 @@ func NewKvFileStoreWriter(fileName string, n uint) (IKvStoreWriter, error) {
 	return res, err
 }
 
-func NewKvFileStoreReader(fileName string, n uint) (IKvStoreReader, error) {
-	res := &kvFileStore{
+func NewKvFileStoreReader(fileName string, n uint) (IStoreReader, error) {
+	res := &store{
 		fileName: fileName,
 		n:        n,
 		f:        NewSMBinaryStringFactory(),
@@ -83,7 +83,7 @@ func NewKvFileStoreReader(fileName string, n uint) (IKvStoreReader, error) {
 	return res, err
 }
 
-func (d *kvFileStore) Write(id Identifier, l Label) {
+func (d *store) Write(id Identifier, l Label) {
 	d.c += 1
 	_, err := d.bw.Write(l)
 	if err != nil {
@@ -92,7 +92,7 @@ func (d *kvFileStore) Write(id Identifier, l Label) {
 }
 
 // Removes all data from the file
-func (d *kvFileStore) Reset() error {
+func (d *store) Reset() error {
 	err := d.bw.Flush()
 	if err != nil {
 		return err
@@ -102,23 +102,23 @@ func (d *kvFileStore) Reset() error {
 	return d.file.Truncate(0)
 }
 
-func (d *kvFileStore) Finalize() {
+func (d *store) Finalize() {
 	// flush buffer to file
 	if d.bw != nil {
 		_ = d.bw.Flush()
 	}
 }
 
-func (d *kvFileStore) Close() error {
+func (d *store) Close() error {
 	d.Finalize()
 	return d.file.Close()
 }
 
-func (d *kvFileStore) Delete() error {
+func (d *store) Delete() error {
 	return os.Remove(d.fileName)
 }
 
-func (d *kvFileStore) Size() uint64 {
+func (d *store) Size() uint64 {
 	stats, err := d.file.Stat()
 	if err != nil {
 		println(err)
@@ -134,7 +134,7 @@ func (d *kvFileStore) Size() uint64 {
 }
 
 // Returns true iff node's label is already the store
-func (d *kvFileStore) IsLabelInStore(id Identifier) (bool, error) {
+func (d *store) IsLabelInStore(id Identifier) (bool, error) {
 
 	idx, err := d.calcFileIndex(id)
 	if err != nil {
@@ -157,7 +157,7 @@ func (d *kvFileStore) IsLabelInStore(id Identifier) (bool, error) {
 
 // Read label value from the store
 // Returns the label of node id or error if it is not in the store
-func (d *kvFileStore) Read(id Identifier) (Label, error) {
+func (d *store) Read(id Identifier) (Label, error) {
 
 	label := make(Label, WB)
 
@@ -185,7 +185,7 @@ func (d *kvFileStore) Read(id Identifier) (Label, error) {
 }
 
 // Returns the file offset for a node id
-func (d *kvFileStore) calcFileIndex(id Identifier) (uint64, error) {
+func (d *store) calcFileIndex(id Identifier) (uint64, error) {
 	s := d.subtreeSize(id)
 	s1, err := d.leftSiblingsSubtreeSize(id)
 	if err != nil {
@@ -199,7 +199,7 @@ func (d *kvFileStore) calcFileIndex(id Identifier) (uint64, error) {
 }
 
 // Returns the size of the subtree rooted at node id
-func (d *kvFileStore) subtreeSize(id Identifier) uint64 {
+func (d *store) subtreeSize(id Identifier) uint64 {
 	// node depth is the number of bits in its id
 	depth := uint(len(id))
 	height := d.n - depth
@@ -208,7 +208,7 @@ func (d *kvFileStore) subtreeSize(id Identifier) uint64 {
 
 // Returns the size of the subtrees rooted at left siblings on the path
 // from node id to the root node
-func (d *kvFileStore) leftSiblingsSubtreeSize(id Identifier) (uint64, error) {
+func (d *store) leftSiblingsSubtreeSize(id Identifier) (uint64, error) {
 	bs, err := d.f.NewBinaryString(string(id))
 	if err != nil {
 		return 0, err
