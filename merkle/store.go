@@ -14,7 +14,6 @@ const (
 	WB = 32  // W in bytes
 )
 
-
 type Label []byte      // label is WB bytes long
 type Labels []Label    // an ordered list of Labels
 type Identifier string // variable-length binary string. e.g. "0011010" Only 0s and 1s are allows chars. Identifiers are n bits long.
