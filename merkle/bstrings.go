@@ -8,6 +8,10 @@ import (
 	"strconv"
 )
 
+const (
+	cacheSize = 500
+)
+
 // An immutable variable length binary string with possible leading 0s
 type BinaryString interface {
 
@@ -39,18 +43,18 @@ type BinaryStringFactory interface {
 	NewBinaryStringFromInt(v uint64, d uint) (BinaryString, error)
 }
 
-// Fixed length binary strings
+// Fixed-length binary strings
 
 type SMBinaryStringFactory struct {
-	// cache map[uint64] map[uint]*SMBinaryString
-	// cache1 map[string] *SMBinaryString
+	cache  map[uint64]map[uint]*SMBinaryString
+	cache1 map[string]*SMBinaryString
 }
 
 func NewSMBinaryStringFactory() BinaryStringFactory {
 
 	return &SMBinaryStringFactory{
-		// make(map[uint64] map[uint]*SMBinaryString, 500),
-		// make(map[string]*SMBinaryString, 500),
+		make(map[uint64]map[uint]*SMBinaryString, cacheSize),
+		make(map[string]*SMBinaryString, cacheSize),
 	}
 }
 
@@ -63,20 +67,18 @@ type SMBinaryString struct {
 // digits must be at least as large to represent v
 func (f *SMBinaryStringFactory) NewBinaryStringFromInt(v uint64, d uint) (BinaryString, error) {
 
-	// todo: only test in debug builds but not in production ones
+	res := f.cache[v][d]
+	if res != nil {
+		return res, nil
+	}
 
-	/*
-		l := uint(bits.Len64(v))
-		if l > d {
-			return nil, errors.New("invalid digits. Digits must be large enough to represent v in bits")
-		}*/
-
-	res := &SMBinaryString{
+	res = &SMBinaryString{
 		v: v,
 		d: d,
 		f: f,
 	}
 
+	f.cache[v][d] = res
 	return res, nil
 }
 
@@ -85,6 +87,11 @@ func (f *SMBinaryStringFactory) NewBinaryStringFromInt(v uint64, d uint) (Binary
 // other then 0 or 1
 // Any leading 0s will be included in the result
 func (f *SMBinaryStringFactory) NewBinaryString(s string) (BinaryString, error) {
+
+	res := f.cache1[s]
+	if res != nil {
+		return res, nil
+	}
 
 	var v uint64
 
@@ -96,12 +103,13 @@ func (f *SMBinaryStringFactory) NewBinaryString(s string) (BinaryString, error) 
 		v = parsed
 	}
 
-	res := &SMBinaryString{
+	res = &SMBinaryString{
 		v: v,
 		d: uint(len(s)),
 		f: f,
 	}
 
+	f.cache1[s] = res
 	return res, nil
 }
 

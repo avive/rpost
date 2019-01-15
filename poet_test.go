@@ -2,8 +2,8 @@ package main
 
 import (
 	"crypto/rand"
-	"github.com/avive/rpost/internal"
 	"github.com/avive/rpost/hashing"
+	"github.com/avive/rpost/internal"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
