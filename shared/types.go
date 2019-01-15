@@ -5,3 +5,6 @@ type HashFunc interface {
 	Hash(data ...[]byte) []byte
 	HashSingle(data []byte) []byte
 }
+
+
+

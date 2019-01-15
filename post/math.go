@@ -98,12 +98,8 @@ func clearMsbBits(l uint, data []byte) *big.Int {
 	z := new(big.Int).SetBytes(data)
 	firstBitIdx := len(data)*8 - int(l)
 	lastBitIdx := len(data)*8 - 1
-
 	for i := firstBitIdx; i <= lastBitIdx; i++ {
 		z = z.SetBit(z, i, 0)
 	}
-
-	// fmt.Printf("input mask:\n %s \n 0x%x \n", new(big.Int).SetBytes(data).String(), data)
-	// fmt.Printf("new mask:\n %s \n 0x%x \n", z.String(), z.Bytes())
 	return z
 }

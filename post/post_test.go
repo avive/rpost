@@ -13,10 +13,10 @@ import (
 
 func TestPost(t *testing.T) {
 	/*
-	testPost(t, 4, 20)
-	testPost(t, 4, 22)
-	testPost(t, 8, 18)
-	testPost(t, 10, 16)*/
+		testPost(t, 4, 20)
+		testPost(t, 4, 22)
+		testPost(t, 8, 18)
+		testPost(t, 10, 16)*/
 
 	testPost(t, 12, 20)
 }

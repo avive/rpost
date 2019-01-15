@@ -10,6 +10,14 @@ govendor sync
 go build
 ```
 
+## Features
+- [x] Optimal store size
+- [x] Support all paper params
+- [x] Fast random access of data from store (bit-level)
+- [x] Table generation and validity tests
+- [ ] Merkle tree generation and store 
+- [ ] Real-world test scenarios
+
 ## Testing
 ```
 go test ./...

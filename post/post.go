@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	k = 256 // this can't be modified and is set as it is the bit length of the output of sha256()
+	k = 256 // this can't be modified and is set as it needs to be the same as the bit length of the output of sha256()
 )
 
 type Table struct {
@@ -67,7 +67,7 @@ func (t *Table) Generate(returnData bool) (error, []uint64) {
 	p := GetProbability(t.l)
 	fmt.Printf("Difficulty p: %.30f\n", p)
 
-	fmt.Printf("Expected hashes to find a digest is at least : %d \n", int(1/p))
+	fmt.Printf("Expected hashes to find a digest is at least %d hash ops\n", int(1/p))
 
 	maxNonceVal := big.NewInt(int64(math.Ceil(k / p)))
 	fmt.Printf("Max permitted nonce: %s\n", maxNonceVal.String())
@@ -104,9 +104,9 @@ func (t *Table) Generate(returnData bool) (error, []uint64) {
 			d = d.SetBytes(digest)
 
 			if d.Cmp(m) == -1 { // H(id, i, x) < p
-				fmt.Printf(" Nonce: %d %b - digest: 0x%x\n", nonce.Uint64(), nonce.Uint64(), digest)
+				fmt.Printf("[%d]: Nonce: %d %b. Digest: 0x%x\n", i, nonce.Uint64(), nonce.Uint64(), digest)
 
-				// Take l lsb bits from nonce and store as uint64
+				// Take l lsb bits from nonce and decode to uint64
 				data := nonce.And(nonce, storeMask).Uint64()
 
 				fmt.Printf("Data (%d lsb bits of nonce): %d %b bits:%d \n", t.l, data, data, bits.Len64(data))
@@ -120,7 +120,7 @@ func (t *Table) Generate(returnData bool) (error, []uint64) {
 					return err, nil
 				}
 
-				if returnData {
+				if returnData { // append to in-memory result - used for testing
 					res = append(res, data)
 				}
 
@@ -130,8 +130,8 @@ func (t *Table) Generate(returnData bool) (error, []uint64) {
 			nonce = nonce.Add(nonce, one)
 
 			if nonce.Cmp(maxNonceVal) == 1 {
-				// nonce overflow case. We expect nonce to be up to ceil(k/p)
-				return errors.New("failed to find nonce in permitted range"), nil
+				// nonce overflow. We expect nonce length to not go over ceil(k/p)
+				return errors.New("failed to find nonce in permitted range ceil(k/p)"), nil
 			}
 		}
 	}
