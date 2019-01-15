@@ -1,6 +1,7 @@
 package post
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"github.com/Workiva/go-datastructures/bitarray"
@@ -15,13 +16,15 @@ type StoreWriter interface {
 	Close() error
 }
 
-// SotreReader is a random access reader capable of reading data from any valid bit offset
+// StoreReader is a random access reader capable of reading data from any valid bit offset
 type StoreReader interface {
 	Read(idx uint64) (bitarray.BitArray, error)
+	ReadUint64(idx uint64) (uint64, error)
+	ReadBytes(idx uint64) ([]byte, error)
 	Close() error
 }
 
-type Store struct {
+type store struct {
 	filePath string   // disk store data file path + name
 	file     *os.File // file
 	writer   bitio.Writer
@@ -36,7 +39,7 @@ func NewStoreWriter(filePath string, n uint) (StoreWriter, error) {
 		return nil, err
 	}
 
-	return &Store{filePath,
+	return &store{filePath,
 		f,
 		bitio.NewWriter(f),
 		n, 0}, nil
@@ -54,29 +57,58 @@ func NewStoreReader(filePath string, n uint) (StoreReader, error) {
 		return nil, err
 	}
 
-	return &Store{filePath,
+	return &store{filePath,
 		f,
 		nil,
 		n,
 		uint64(fi.Size())}, nil
 }
 
-func (s *Store) Write(r uint64, n byte) error {
+func (s *store) Write(r uint64, n byte) error {
 	return s.writer.WriteBits(r, n)
 }
 
-func (s *Store) WriteBool(b bool) error {
+func (s *store) WriteBool(b bool) error {
 	return s.writer.WriteBool(b)
 }
 
-func (s *Store) Close() error {
+func (s *store) Close() error {
 	return s.writer.Close()
+}
+
+// Read from index id and return decoded uint64
+func (s *store) ReadUint64(idx uint64) (uint64, error) {
+	v, err := s.Read(idx)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := Uint64Value(v, uint64(s.n))
+	if err != nil {
+		return 0, err
+	}
+
+	return res, nil
+}
+
+// read from index idx and return as []byte
+func (s *store) ReadBytes(idx uint64) ([]byte, error) {
+	v, err := s.ReadUint64(idx)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := make([]byte, binary.MaxVarintLen64)
+	n := binary.PutUvarint(buf, v)
+	res := buf[:n]
+
+	return res, nil
 }
 
 // Read s.n bits at index idx from the store
 // This method can read from any index any number of times. e.g. It is not a classic GO reader which consumes the data it reads
 // We need this for random access into the table when generating a proof for a random challenge...
-func (s *Store) Read(idx uint64) (bitarray.BitArray, error) {
+func (s *store) Read(idx uint64) (bitarray.BitArray, error) {
 
 	fmt.Printf("File size in bytes: %d...\n", s.sz)
 	fmt.Printf("Reading %d bits entry from store at index %d...\n", s.n, idx)

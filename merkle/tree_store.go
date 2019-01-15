@@ -52,7 +52,7 @@ type store struct {
 }
 
 // n - binary tree height
-func NewKvFileStoreWriter(fileName string, n uint) (IStoreWriter, error) {
+func NewTreeStoreWriter(fileName string, n uint) (IStoreWriter, error) {
 	res := &store{
 		fileName: fileName,
 		n:        n,
@@ -68,7 +68,7 @@ func NewKvFileStoreWriter(fileName string, n uint) (IStoreWriter, error) {
 	return res, err
 }
 
-func NewKvFileStoreReader(fileName string, n uint) (IStoreReader, error) {
+func NewTreeStoreReader(fileName string, n uint) (IStoreReader, error) {
 	res := &store{
 		fileName: fileName,
 		n:        n,
