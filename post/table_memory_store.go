@@ -27,7 +27,7 @@ func (ms *MemoryStore) Close() error {
 }
 
 func (ms *MemoryStore) FileName() string {
-	return ""
+	return "" // hack alert
 }
 
 // read from index idx and return as []byte

@@ -11,55 +11,14 @@ import (
 	"testing"
 )
 
-func TestPost(t *testing.T) {
-
-	// testPostStore(t, 4, 20, "post.bin")
-
-	testPost(t, 4, 20, "post1.bin", "merkle1.bin")
-	// testPost(t, 4, 22)
-	// testPost(t, 8, 18)
-	// testPost(t, 10, 16)
-
-	// testPost(t, 12, 20)
+func TestTable(t *testing.T) {
+	testTable(t, 4, 20, "post.bin")
 }
 
 // n - Table size T = 2^n
 // l - iPoW difficulty and the # of nonce bits to store per entry
 // This is a playground disguised as a test :-)
-func testPost(t *testing.T, n uint64, l uint, fileName string, merkleFileName string) {
-
-	// File to store iPoWs
-	currFolder, err := os.Getwd() // os.TempDir()
-	if err != nil {
-		assert.NoError(t, err, "can't get path of executable")
-	}
-
-	f := filepath.Join(currFolder, fileName)
-	mf := filepath.Join(currFolder, merkleFileName)
-
-	// Initial commitment
-	id := util.Rnd(t, 32)
-
-	// H(id) to be used for iPoW
-	h := hashing.NewHashFunc(id)
-
-	// New store table
-	table, err := NewTable(id, n, l, h, f)
-	assert.NoError(t, err)
-
-	// Store the data
-	comm, err := table.Store(mf)
-	assert.NoError(t, err)
-
-	fmt.Printf("Merkle commitment: 0x%x \n", comm)
-
-}
-
-
-// n - Table size T = 2^n
-// l - iPoW difficulty and the # of nonce bits to store per entry
-// This is a playground disguised as a test :-)
-func testPostStore(t *testing.T, n uint64, l uint, fileName string) {
+func testTable(t *testing.T, n uint64, l uint, fileName string) {
 
 	// File to store iPoWs
 	currFolder, err := os.Getwd() // os.TempDir()
