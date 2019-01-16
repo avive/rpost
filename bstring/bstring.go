@@ -1,4 +1,4 @@
-package merkle
+package bstring
 
 import (
 	"crypto/rand"

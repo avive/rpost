@@ -26,6 +26,10 @@ func (ms *MemoryStore) Close() error {
 	return nil
 }
 
+func (ms *MemoryStore) FileName() string {
+	return ""
+}
+
 // read from index idx and return as []byte
 func (ms *MemoryStore) ReadBytes(idx uint64) ([]byte, error) {
 	v, err := ms.ReadUint64(idx)

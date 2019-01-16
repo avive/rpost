@@ -1,7 +1,9 @@
-package merkle
+package post
 
 import (
 	"errors"
+	"github.com/avive/rpost/bstring"
+	"github.com/avive/rpost/util"
 	"math"
 	"os"
 )
@@ -42,21 +44,21 @@ type IStoreReader interface {
 	Close() error
 }
 
-type store struct {
+type treeStore struct {
 	fileName string
 	file     *os.File
 	n        uint // 1 <= n < 64
-	f        BinaryStringFactory
-	bw       *Writer
+	f        bstring.BinaryStringFactory
+	bw       *util.Writer
 	c        uint64 // num of labels written to store in this session
 }
 
 // n - binary tree height
 func NewTreeStoreWriter(fileName string, n uint) (IStoreWriter, error) {
-	res := &store{
+	res := &treeStore{
 		fileName: fileName,
 		n:        n,
-		f:        NewSMBinaryStringFactory(),
+		f:        bstring.NewSMBinaryStringFactory(),
 	}
 
 	f, err := os.OpenFile(res.fileName, os.O_RDWR|os.O_CREATE, 0666)
@@ -64,15 +66,15 @@ func NewTreeStoreWriter(fileName string, n uint) (IStoreWriter, error) {
 		return nil, err
 	}
 	res.file = f
-	res.bw = NewWriterSize(f, buffSizeBytes)
+	res.bw = util.NewWriterSize(f, buffSizeBytes)
 	return res, err
 }
 
 func NewTreeStoreReader(fileName string, n uint) (IStoreReader, error) {
-	res := &store{
+	res := &treeStore{
 		fileName: fileName,
 		n:        n,
-		f:        NewSMBinaryStringFactory(),
+		f:        bstring.NewSMBinaryStringFactory(),
 	}
 
 	f, err := os.OpenFile(res.fileName, os.O_RDONLY, 0666)
@@ -83,7 +85,7 @@ func NewTreeStoreReader(fileName string, n uint) (IStoreReader, error) {
 	return res, err
 }
 
-func (d *store) Write(id Identifier, l Label) {
+func (d *treeStore) Write(id Identifier, l Label) {
 	d.c += 1
 	_, err := d.bw.Write(l)
 	if err != nil {
@@ -92,7 +94,7 @@ func (d *store) Write(id Identifier, l Label) {
 }
 
 // Removes all data from the file
-func (d *store) Reset() error {
+func (d *treeStore) Reset() error {
 	err := d.bw.Flush()
 	if err != nil {
 		return err
@@ -102,23 +104,23 @@ func (d *store) Reset() error {
 	return d.file.Truncate(0)
 }
 
-func (d *store) Finalize() {
+func (d *treeStore) Finalize() {
 	// flush buffer to file
 	if d.bw != nil {
 		_ = d.bw.Flush()
 	}
 }
 
-func (d *store) Close() error {
+func (d *treeStore) Close() error {
 	d.Finalize()
 	return d.file.Close()
 }
 
-func (d *store) Delete() error {
+func (d *treeStore) Delete() error {
 	return os.Remove(d.fileName)
 }
 
-func (d *store) Size() uint64 {
+func (d *treeStore) Size() uint64 {
 	stats, err := d.file.Stat()
 	if err != nil {
 		println(err)
@@ -134,7 +136,7 @@ func (d *store) Size() uint64 {
 }
 
 // Returns true iff node's label is already the store
-func (d *store) IsLabelInStore(id Identifier) (bool, error) {
+func (d *treeStore) IsLabelInStore(id Identifier) (bool, error) {
 
 	idx, err := d.calcFileIndex(id)
 	if err != nil {
@@ -157,7 +159,7 @@ func (d *store) IsLabelInStore(id Identifier) (bool, error) {
 
 // Read label value from the store
 // Returns the label of node id or error if it is not in the store
-func (d *store) Read(id Identifier) (Label, error) {
+func (d *treeStore) Read(id Identifier) (Label, error) {
 
 	label := make(Label, WB)
 
@@ -185,7 +187,7 @@ func (d *store) Read(id Identifier) (Label, error) {
 }
 
 // Returns the file offset for a node id
-func (d *store) calcFileIndex(id Identifier) (uint64, error) {
+func (d *treeStore) calcFileIndex(id Identifier) (uint64, error) {
 	s := d.subtreeSize(id)
 	s1, err := d.leftSiblingsSubtreeSize(id)
 	if err != nil {
@@ -199,7 +201,7 @@ func (d *store) calcFileIndex(id Identifier) (uint64, error) {
 }
 
 // Returns the size of the subtree rooted at node id
-func (d *store) subtreeSize(id Identifier) uint64 {
+func (d *treeStore) subtreeSize(id Identifier) uint64 {
 	// node depth is the number of bits in its id
 	depth := uint(len(id))
 	height := d.n - depth
@@ -208,7 +210,7 @@ func (d *store) subtreeSize(id Identifier) uint64 {
 
 // Returns the size of the subtrees rooted at left siblings on the path
 // from node id to the root node
-func (d *store) leftSiblingsSubtreeSize(id Identifier) (uint64, error) {
+func (d *treeStore) leftSiblingsSubtreeSize(id Identifier) (uint64, error) {
 	bs, err := d.f.NewBinaryString(string(id))
 	if err != nil {
 		return 0, err

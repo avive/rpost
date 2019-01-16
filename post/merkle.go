@@ -1,8 +1,8 @@
 package post
 
 import (
+	"github.com/avive/rpost/bstring"
 	"github.com/avive/rpost/hashing"
-	"github.com/avive/rpost/merkle"
 )
 
 const (
@@ -17,22 +17,22 @@ type merkleTree struct {
 	fileName string           // merkle tree data file full path and name
 	l        uint             // number of bits in a post store entry
 	n        uint             // table size T=2^n
-	psr      StoreReader      // reader for post data
+	psr      StoreReader // reader for post data
 	h        hashing.HashFunc // Hx()
-	f        merkle.BinaryStringFactory
-	w        merkle.IStoreWriter // merkle tree store writer
+	f        bstring.BinaryStringFactory
+	w        IStoreWriter // merkle tree store writer
 }
 
 func NewMerkleTreeWriter(psr StoreReader, fileName string, l uint, n uint,
 	h hashing.HashFunc) (IMerkleTreeWriter, error) {
 
-	w, err := merkle.NewTreeStoreWriter(fileName, n-1)
+	w, err := NewTreeStoreWriter(fileName, n-1)
 	if err != nil {
 		return nil, err
 	}
 
 	res := &merkleTree{
-		fileName, l, n, psr, h, merkle.NewSMBinaryStringFactory(), w,
+		fileName, l, n, psr, h, bstring.NewSMBinaryStringFactory(), w,
 	}
 
 	return res, nil
@@ -72,7 +72,7 @@ func (mt *merkleTree) visit(nodeId string) ([]byte, error) {
 			return nil, err
 		}
 
-		rightNodeValue, err = mt.psr.ReadBytes(idx+1)
+		rightNodeValue, err = mt.psr.ReadBytes(idx + 1)
 		if err != nil {
 			return nil, err
 		}
@@ -92,6 +92,6 @@ func (mt *merkleTree) visit(nodeId string) ([]byte, error) {
 	}
 
 	digest := mt.h.Hash(leftNodeValue, rightNodeValue)
-	mt.w.Write(merkle.Identifier(nodeId), digest)
+	mt.w.Write(Identifier(nodeId), digest)
 	return digest, nil
 }

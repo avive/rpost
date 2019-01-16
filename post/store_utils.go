@@ -3,6 +3,7 @@ package post
 import (
 	"bufio"
 	"fmt"
+	"github.com/avive/rpost/util"
 	"io"
 	"os"
 )
@@ -29,7 +30,7 @@ func dumpContent(filePath string, lineLength uint) error {
 		data = data[:n]
 		for _, b := range data {
 			for i := 7; i >= 0; i-- { // read bits from msb to lsb...
-				bit := GetNthBit(b, uint64(i))
+				bit := util.GetNthBit(b, uint64(i))
 				if bit {
 					fmt.Print("1")
 				} else {

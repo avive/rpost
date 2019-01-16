@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Workiva/go-datastructures/bitarray"
+	"github.com/avive/rpost/util"
 	"github.com/icza/bitio"
 	"os"
 )
@@ -14,6 +15,7 @@ type StoreWriter interface {
 	Write(r uint64, n byte) error
 	WriteBool(b bool) error
 	Close() error
+	FileName() string
 }
 
 // StoreReader is a random access reader capable of reading data from any valid bit offset
@@ -22,6 +24,7 @@ type StoreReader interface {
 	ReadUint64(idx uint64) (uint64, error)
 	ReadBytes(idx uint64) ([]byte, error)
 	Close() error
+	FileName() string
 }
 
 type store struct {
@@ -76,6 +79,11 @@ func (s *store) Close() error {
 	return s.writer.Close()
 }
 
+func (s *store) FileName() string {
+	return s.filePath
+}
+
+
 // Read from index id and return decoded uint64
 func (s *store) ReadUint64(idx uint64) (uint64, error) {
 	v, err := s.Read(idx)
@@ -83,7 +91,7 @@ func (s *store) ReadUint64(idx uint64) (uint64, error) {
 		return 0, err
 	}
 
-	res, err := Uint64Value(v, uint64(s.n))
+	res, err := util.Uint64Value(v, uint64(s.n))
 	if err != nil {
 		return 0, err
 	}
@@ -159,7 +167,7 @@ func (s *store) Read(idx uint64) (bitarray.BitArray, error) {
 
 		// read next bit from the buffer
 		// we need to use 7 - o because we assume byte representation of a bit field in the form: [7,6,5,...0]
-		set := GetNthBit(buff[byteIdx], 7-o)
+		set := util.GetNthBit(buff[byteIdx], 7-o)
 		if set {
 			// set the bit in the ith index of the result bit array
 			err := res.SetBit(i)

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/avive/rpost/hashing"
+	"github.com/avive/rpost/util"
 	"math"
 	"math/big"
 	"math/bits"
@@ -45,17 +46,36 @@ var one = big.NewInt(1)
 // var maxNonce = GetMaxNonce(256)
 
 // Implements the Store phase of rpost (page 9)
-// returnData - return table data in ram (for testing purposes)
-// set to false to only store the data
-func (t *Table) Store(returnData bool) ([]uint64, error) {
+// Stores the data and the merkle tree
+func (t *Table) Store(merkleFilePath string) ([]byte, error) {
 
 	// 1. Generate and store the values of the iPoW table G
-	data, err := t.Generate(returnData)
+	_, err := t.Generate(false)
 	if err != nil {
 		return nil, err
 	}
 
-	return data, err
+	// 2. Generate the Merkle store
+
+
+	// test merkle tree from post store
+	sr, err := NewStoreReader(t.s.FileName(), t.l)
+	if err != nil {
+		return nil, err
+	}
+
+	// Merkle file writer
+	mw, err := NewMerkleTreeWriter(sr, merkleFilePath, t.l, uint(t.n), t.h)
+	if err != nil {
+		return nil, err
+	}
+
+	comm, err := mw.Write()
+	if err != nil {
+		return nil, err
+	}
+
+	return comm, nil
 }
 
 func (t *Table) Generate(returnData bool) ([]uint64, error) {
@@ -68,7 +88,7 @@ func (t *Table) Generate(returnData bool) ([]uint64, error) {
 	fmt.Printf("P*: %f \n", phi)
 
 	// compute probability in (0...1)
-	p := GetProbability(t.l)
+	p := util.GetProbability(t.l)
 	fmt.Printf("Difficulty p: %.30f\n", p)
 
 	fmt.Printf("Expected hashes to find a digest is at least %d hash ops\n", int(1/p))
@@ -84,10 +104,10 @@ func (t *Table) Generate(returnData bool) ([]uint64, error) {
 	fmt.Printf("Difficulty param : %d\n", t.l)
 
 	// create a bit mask of t.l bits set to 1
-	storeMask := GetSimpleMask(t.l)
+	storeMask := util.GetSimpleMask(t.l)
 	fmt.Printf("Store mask bit field : %d %b\n", storeMask, storeMask)
 
-	m := GetMask(32, t.l)
+	m := util.GetMask(32, t.l)
 	fmt.Printf("Mask : %s\n", m.String())
 
 	iBuf := make([]byte, 10)

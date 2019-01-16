@@ -1,9 +1,9 @@
 package post
 
 import (
-	"crypto/rand"
 	"fmt"
 	"github.com/avive/rpost/hashing"
+	"github.com/avive/rpost/util"
 	"github.com/stretchr/testify/assert"
 	"math"
 	"os"
@@ -13,41 +13,77 @@ import (
 
 func TestPost(t *testing.T) {
 
-		testPost(t, 4, 20)
-		// testPost(t, 4, 22)
-		// testPost(t, 8, 18)
-		// testPost(t, 10, 16)
+	// testPostStore(t, 4, 20, "post.bin")
+
+	testPost(t, 4, 20, "post1.bin", "merkle1.bin")
+	// testPost(t, 4, 22)
+	// testPost(t, 8, 18)
+	// testPost(t, 10, 16)
 
 	// testPost(t, 12, 20)
 }
 
 // n - Table size T = 2^n
 // l - iPoW difficulty and the # of nonce bits to store per entry
-func testPost(t *testing.T, n uint64, l uint) {
+// This is a playground disguised as a test :-)
+func testPost(t *testing.T, n uint64, l uint, fileName string, merkleFileName string) {
 
 	// File to store iPoWs
 	currFolder, err := os.Getwd() // os.TempDir()
 	if err != nil {
-		panic ("Can't get path of executable")
+		assert.NoError(t, err, "can't get path of executable")
 	}
 
-	f := filepath.Join(currFolder, "post.bin")
-	mf := filepath.Join(currFolder, "merkle.bin")
+	f := filepath.Join(currFolder, fileName)
+	mf := filepath.Join(currFolder, merkleFileName)
 
 	// Initial commitment
-	id := make([]byte, 32)
-	_, err = rand.Read(id)
-	assert.NoError(t, err)
+	id := util.Rnd(t, 32)
 
-	h := hashing.NewHashFunc(id) // H(id) to be used for iPoW
+	// H(id) to be used for iPoW
+	h := hashing.NewHashFunc(id)
 
+	// New store table
 	table, err := NewTable(id, n, l, h, f)
 	assert.NoError(t, err)
 
-	// Create the file
-	res, err := table.Store(true)
+	// Store the data
+	comm, err := table.Store(mf)
 	assert.NoError(t, err)
 
+	fmt.Printf("Merkle commitment: 0x%x \n", comm)
+
+}
+
+
+// n - Table size T = 2^n
+// l - iPoW difficulty and the # of nonce bits to store per entry
+// This is a playground disguised as a test :-)
+func testPostStore(t *testing.T, n uint64, l uint, fileName string) {
+
+	// File to store iPoWs
+	currFolder, err := os.Getwd() // os.TempDir()
+	if err != nil {
+		assert.NoError(t, err, "can't get path of executable")
+	}
+
+	f := filepath.Join(currFolder, fileName)
+
+	// Initial commitment
+	id := util.Rnd(t, 32)
+
+	// H(id) to be used for iPoW
+	h := hashing.NewHashFunc(id)
+
+	// New store table
+	table, err := NewTable(id, n, l, h, f)
+	assert.NoError(t, err)
+
+	// Store the data
+	res, err := table.Generate(true)
+	assert.NoError(t, err)
+
+	// Display the stored content from file
 	err = dumpContent(f, l)
 	assert.NoError(t, err)
 
@@ -65,38 +101,13 @@ func testPost(t *testing.T, n uint64, l uint) {
 
 		// compare the data parsed from the file to the data
 		// returned by Generate in
-		v, err := Uint64Value(data, uint64(l))
+		v, err := util.Uint64Value(data, uint64(l))
 		assert.NoError(t, err)
 		assert.Equal(t, v, res[i])
 
-		s, err := String(data, uint64(l))
+		s, err := util.String(data, uint64(l))
 		fmt.Printf("Data: %s \n", s)
 	}
-
-	// Test Merkle tree
-
-	// post memory reader from post data in ram
-	sr := NewMemoryStoreReader(res)
-
-	mw, err := NewMerkleTreeWriter(sr, mf, l, uint(n), h)
-	assert.NoError(t, err)
-
-	comm, err := mw.Write()
-	assert.NoError(t, err)
-	fmt.Printf("Merkle commitment: %x \n", comm)
-
-	// test merkle tree from post store
-	sr, err = NewStoreReader(f, l)
-	assert.NoError(t, err)
-
-	mw, err = NewMerkleTreeWriter(sr, mf, l, uint(n), h)
-	assert.NoError(t, err)
-	comm1, err := mw.Write()
-	assert.NoError(t, err)
-	fmt.Printf("Merkle commitment: %x \n", comm)
-
-	assert.EqualValues(t, comm, comm1)
-
 }
 
 // Validate actual store file size based on expected values

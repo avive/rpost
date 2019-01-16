@@ -1,10 +1,13 @@
-package post
+package util
 
 import (
+	"crypto/rand"
 	"github.com/Workiva/go-datastructures/bitarray"
+	"github.com/stretchr/testify/assert"
 	"math"
 	"math/big"
 	"strings"
+	"testing"
 )
 
 // POST math utils funcs
@@ -102,4 +105,12 @@ func clearMsbBits(l uint, data []byte) *big.Int {
 		z = z.SetBit(z, i, 0)
 	}
 	return z
+}
+
+// test helper - generate n random bytes
+func Rnd(t *testing.T, length uint) []byte {
+	res := make([]byte, length)
+	_, err := rand.Read(res)
+	assert.NoError(t, err)
+	return res
 }
