@@ -13,6 +13,16 @@ type IMerkleTreeWriter interface {
 	Write() ([]byte, error)
 }
 
+type IMerkleTreeReader interface {
+	ReadPath(id Identifier) ([]Node, error) // Returns the path from a node identified by id to the root node
+	Close() error
+}
+
+type Node struct {
+	id    Identifier
+	label Label
+}
+
 type merkleTree struct {
 	fileName string           // merkle tree data file full path and name
 	l        uint             // number of bits in a post store entry
@@ -21,8 +31,35 @@ type merkleTree struct {
 	h        hashing.HashFunc // Hx()
 	f        bstring.BinaryStringFactory
 	w        IStoreWriter // merkle tree store writer
+	r        IStoreReader // merkle tree store reader
 }
 
+func (mt *merkleTree) Close() error {
+	if mt.r != nil {
+		err := mt.r.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// n - merkle tree size leaves = 2^n
+func NewMerkleTreeReader(fileName string, l uint, n uint, h hashing.HashFunc) (IMerkleTreeReader, error) {
+
+	r, err := NewTreeStoreReader(fileName, n)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &merkleTree{
+		fileName, l, n, nil, h, bstring.NewSMBinaryStringFactory(), nil, r,
+	}
+
+	return res, nil
+}
+
+// n - store length. T = 2^n
 func NewMerkleTreeWriter(psr StoreReader, fileName string, l uint, n uint,
 	h hashing.HashFunc) (IMerkleTreeWriter, error) {
 
@@ -32,7 +69,31 @@ func NewMerkleTreeWriter(psr StoreReader, fileName string, l uint, n uint,
 	}
 
 	res := &merkleTree{
-		fileName, l, n, psr, h, bstring.NewSMBinaryStringFactory(), w,
+		fileName, l, n, psr, h, bstring.NewSMBinaryStringFactory(), w, nil,
+	}
+
+	return res, nil
+}
+
+// Returns the nodes on the path from a node identified by id to the root inclusive
+func (mt *merkleTree) ReadPath(id Identifier) ([]Node, error) {
+
+	items := len(id) + 1
+	res := make([]Node, items)
+	path := id
+
+	for i := 0; i < items; i++ {
+		l, err := mt.r.Read(path)
+		if err != nil {
+			return nil, err
+		}
+
+		res[i] = Node{path, l}
+		if len(path) == 0 {
+			break
+		} else {
+			path = path[0 : len(path)-1]
+		}
 	}
 
 	return res, nil
@@ -47,11 +108,21 @@ func (mt *merkleTree) Write() ([]byte, error) {
 	// Number of table entries
 	// t := uint64(math.Pow(2, float64(mt.n)))
 
-	return mt.visit(rootId)
+	comm, err := mt.write(rootId)
+	if err != nil {
+		return nil, err
+	}
+
+	err = mt.w.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return comm, nil
 }
 
 // visit a node identified by nodeId and returns its value
-func (mt *merkleTree) visit(nodeId string) ([]byte, error) {
+func (mt *merkleTree) write(nodeId string) ([]byte, error) {
 
 	var leftNodeValue, rightNodeValue []byte
 
@@ -80,12 +151,12 @@ func (mt *merkleTree) visit(nodeId string) ([]byte, error) {
 		// Node is an internal Merkle tree node
 		// Recursively compute its value based on its children and store it
 		var err error
-		leftNodeValue, err = mt.visit(nodeId + "0")
+		leftNodeValue, err = mt.write(nodeId + "0")
 		if err != nil {
 			return nil, err
 		}
 
-		rightNodeValue, err = mt.visit(nodeId + "1")
+		rightNodeValue, err = mt.write(nodeId + "1")
 		if err != nil {
 			return nil, err
 		}

@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestMerkle(t *testing.T) {
+func TestMerkleWriter(t *testing.T) {
 	testMerkleStore(t, 4, 20, "post1.bin", "merkle1.bin")
 }
 
@@ -63,5 +63,18 @@ func testMerkleStore(t *testing.T, n uint64, l uint, postFileName string, merkle
 	fmt.Printf("Merkle commitment: 0x%x \n", comm)
 
 	assert.EqualValues(t, comm, comm1)
+
+	mr, err := NewMerkleTreeReader(mf, l, uint(n-1), h)
+	assert.NoError(t, err)
+
+	path, err := mr.ReadPath("101")
+	assert.NoError(t, err)
+	for _, n := range path {
+		fmt.Printf("Id: %s. Label: %x\n", n.id, n.label)
+	}
+
+	// close the reader when we are done with it
+	err = mr.Close()
+	assert.NoError(t, err)
 
 }

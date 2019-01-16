@@ -20,11 +20,6 @@ type Label []byte      // label is WB bytes long binary data
 type Labels []Label    // an ordered list of Labels
 type Identifier string // A Variable-length binary string. e.g. "0011010" Only 0s and 1s are allowed chars.
 
-type Node struct { // a tree node has a label and an identifier
-	id Identifier
-	l  Label
-}
-
 // A simple store writer
 // Labels must be written in depth-first order. Random access is not supported
 type IStoreWriter interface {
