@@ -9,11 +9,11 @@ const (
 	rootId = ""
 )
 
-type IMerkleTreeWriter interface {
+type MerkleTreeWriter interface {
 	Write() ([]byte, error)
 }
 
-type IMerkleTreeReader interface {
+type MerkleTreeReader interface {
 	ReadPath(id Identifier) ([]Node, error) // Returns the path from a node identified by id to the root node
 	Close() error
 }
@@ -35,7 +35,7 @@ type merkleTree struct {
 }
 
 // n - merkle tree size = 2^n
-func NewMerkleTreeReader(fileName string, l uint, n uint, h hashing.HashFunc) (IMerkleTreeReader, error) {
+func NewMerkleTreeReader(fileName string, l uint, n uint, h hashing.HashFunc) (MerkleTreeReader, error) {
 
 	r, err := NewTreeStoreReader(fileName, n)
 	if err != nil {
@@ -51,7 +51,7 @@ func NewMerkleTreeReader(fileName string, l uint, n uint, h hashing.HashFunc) (I
 
 // n - store length. T = 2^n
 func NewMerkleTreeWriter(psr StoreReader, fileName string, l uint, n uint,
-	h hashing.HashFunc) (IMerkleTreeWriter, error) {
+	h hashing.HashFunc) (MerkleTreeWriter, error) {
 
 	w, err := NewTreeStoreWriter(fileName, n-1)
 	if err != nil {

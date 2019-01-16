@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	k = 256 // this can't be modified and is set as it needs to be the same as the bit length of the output of sha256()
+	K = 256 // this can't be modified and is set as it needs to be the same as the bit length of the output of sha256()
 )
 
 type Table struct {
@@ -83,7 +83,7 @@ func (t *Table) Generate(returnData bool) ([]uint64, error) {
 	fmt.Printf("Table size: %d \n", n)
 
 	// p*
-	phi := k / float64(n)
+	phi := K / float64(n)
 	fmt.Printf("P*: %f \n", phi)
 
 	// compute probability in (0...1)
@@ -92,7 +92,7 @@ func (t *Table) Generate(returnData bool) ([]uint64, error) {
 
 	fmt.Printf("Expected hashes to find a digest is at least %d hash ops\n", int(1/p))
 
-	maxNonceVal := big.NewInt(int64(math.Ceil(k / p)))
+	maxNonceVal := big.NewInt(int64(math.Ceil(K / p)))
 	fmt.Printf("Max permitted nonce: %s\n", maxNonceVal.String())
 
 	fmt.Printf("Commitment x: 0x%x\n", t.id)
