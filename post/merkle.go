@@ -17,7 +17,7 @@ type merkleTree struct {
 	fileName string           // merkle tree data file full path and name
 	l        uint             // number of bits in a post store entry
 	n        uint             // table size T=2^n
-	psr      StoreReader // reader for post data
+	psr      StoreReader      // reader for post data
 	h        hashing.HashFunc // Hx()
 	f        bstring.BinaryStringFactory
 	w        IStoreWriter // merkle tree store writer

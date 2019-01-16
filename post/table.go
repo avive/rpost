@@ -57,7 +57,6 @@ func (t *Table) Store(merkleFilePath string) ([]byte, error) {
 
 	// 2. Generate the Merkle store
 
-
 	// test merkle tree from post store
 	sr, err := NewStoreReader(t.s.FileName(), t.l)
 	if err != nil {

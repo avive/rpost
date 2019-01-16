@@ -16,7 +16,6 @@ func TestPostGeneration(t *testing.T) {
 
 }
 
-
 // n - Table size T = 2^n
 // l - iPoW difficulty and the # of nonce bits to store per entry
 // This is a playground disguised as a test :-)

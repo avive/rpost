@@ -83,7 +83,6 @@ func (s *store) FileName() string {
 	return s.filePath
 }
 
-
 // Read from index id and return decoded uint64
 func (s *store) ReadUint64(idx uint64) (uint64, error) {
 	v, err := s.Read(idx)
