@@ -12,13 +12,13 @@ import (
 )
 
 func TestPost(t *testing.T) {
-	/*
-		testPost(t, 4, 20)
-		testPost(t, 4, 22)
-		testPost(t, 8, 18)
-		testPost(t, 10, 16)*/
 
-	testPost(t, 12, 20)
+		testPost(t, 4, 20)
+		// testPost(t, 4, 22)
+		// testPost(t, 8, 18)
+		// testPost(t, 10, 16)
+
+	// testPost(t, 12, 20)
 }
 
 // n - Table size T = 2^n
@@ -26,11 +26,17 @@ func TestPost(t *testing.T) {
 func testPost(t *testing.T, n uint64, l uint) {
 
 	// File to store iPoWs
-	f := filepath.Join(os.TempDir(), "post.bin")
+	currFolder, err := os.Getwd() // os.TempDir()
+	if err != nil {
+		panic ("Can't get path of executable")
+	}
+
+	f := filepath.Join(currFolder, "post.bin")
+	mf := filepath.Join(currFolder, "merkle.bin")
 
 	// Initial commitment
 	id := make([]byte, 32)
-	_, err := rand.Read(id)
+	_, err = rand.Read(id)
 	assert.NoError(t, err)
 
 	h := hashing.NewHashFunc(id) // H(id) to be used for iPoW
@@ -39,12 +45,14 @@ func testPost(t *testing.T, n uint64, l uint) {
 	assert.NoError(t, err)
 
 	// Create the file
-	err, res := table.Generate(true)
+	res, err := table.Store(true)
 	assert.NoError(t, err)
 
 	err = dumpContent(f, l)
 	assert.NoError(t, err)
 
+	// test reading stored data from disc vs. expected data
+	// returned in ram from Store()
 	storeReader, err := NewStoreReader(f, l)
 	assert.NoError(t, err)
 
@@ -64,6 +72,31 @@ func testPost(t *testing.T, n uint64, l uint) {
 		s, err := String(data, uint64(l))
 		fmt.Printf("Data: %s \n", s)
 	}
+
+	// Test Merkle tree
+
+	// post memory reader from post data in ram
+	sr := NewMemoryStoreReader(res)
+
+	mw, err := NewMerkleTreeWriter(sr, mf, l, uint(n), h)
+	assert.NoError(t, err)
+
+	comm, err := mw.Write()
+	assert.NoError(t, err)
+	fmt.Printf("Merkle commitment: %x \n", comm)
+
+	// test merkle tree from post store
+	sr, err = NewStoreReader(f, l)
+	assert.NoError(t, err)
+
+	mw, err = NewMerkleTreeWriter(sr, mf, l, uint(n), h)
+	assert.NoError(t, err)
+	comm1, err := mw.Write()
+	assert.NoError(t, err)
+	fmt.Printf("Merkle commitment: %x \n", comm)
+
+	assert.EqualValues(t, comm, comm1)
+
 }
 
 // Validate actual store file size based on expected values

@@ -45,16 +45,20 @@ var one = big.NewInt(1)
 // var maxNonce = GetMaxNonce(256)
 
 // Implements the Store phase of rpost (page 9)
-func (t *Table) Store() error {
+// returnData - return table data in ram (for testing purposes)
+// set to false to only store the data
+func (t *Table) Store(returnData bool) ([]uint64, error) {
 
 	// 1. Generate and store the values of the iPoW table G
-	err, _ := t.Generate(false)
-	return err
+	data, err := t.Generate(returnData)
+	if err != nil {
+		return nil, err
+	}
 
-	// todo: 2. Compute commitment com on G (root of Merkle tree where G data are leaves
+	return data, err
 }
 
-func (t *Table) Generate(returnData bool) (error, []uint64) {
+func (t *Table) Generate(returnData bool) ([]uint64, error) {
 
 	n := uint64(math.Pow(2, float64(t.n)))
 	fmt.Printf("Table size: %d \n", n)
@@ -117,7 +121,7 @@ func (t *Table) Generate(returnData bool) (error, []uint64) {
 				// and the 16 bits of data next using big-endian encoding. e.g. MSB bit first...
 				err := t.s.Write(data, byte(t.l))
 				if err != nil {
-					return err, nil
+					return nil, err
 				}
 
 				if returnData { // append to in-memory result - used for testing
@@ -131,12 +135,12 @@ func (t *Table) Generate(returnData bool) (error, []uint64) {
 
 			if nonce.Cmp(maxNonceVal) == 1 {
 				// nonce overflow. We expect nonce length to not go over ceil(k/p)
-				return errors.New("failed to find nonce in permitted range ceil(k/p)"), nil
+				return nil, errors.New("failed to find nonce in permitted range ceil(k/p)")
 			}
 		}
 	}
 
-	return t.finalize(), res
+	return res, t.finalize()
 }
 
 func (t *Table) finalize() error {
