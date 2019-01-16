@@ -45,6 +45,7 @@ func testMerkleStore(t *testing.T, n uint64, l uint, postFileName string, merkle
 	// post memory reader from post data in ram
 	sr := NewMemoryStoreReader(res)
 
+	// test merkle tree writer from memory post data
 	mw, err := NewMerkleTreeWriter(sr, mf, l, uint(n), h)
 	assert.NoError(t, err)
 
@@ -52,25 +53,26 @@ func testMerkleStore(t *testing.T, n uint64, l uint, postFileName string, merkle
 	assert.NoError(t, err)
 	fmt.Printf("Merkle commitment: 0x%x \n", comm)
 
-	// test merkle tree from post store
+	// test merkle tree generation from post store
 	sr, err = NewStoreReader(f, l)
 	assert.NoError(t, err)
-
 	mw, err = NewMerkleTreeWriter(sr, mf, l, uint(n), h)
 	assert.NoError(t, err)
 	comm1, err := mw.Write()
 	assert.NoError(t, err)
 	fmt.Printf("Merkle commitment: 0x%x \n", comm)
 
-	assert.EqualValues(t, comm, comm1)
+	assert.EqualValues(t, comm, comm1, "expected same commitment for same data")
 
+	// test reading paths from the merkle tree
 	mr, err := NewMerkleTreeReader(mf, l, uint(n-1), h)
 	assert.NoError(t, err)
 
 	path, err := mr.ReadPath("101")
 	assert.NoError(t, err)
+	assert.Equal(t, len(path), 4, "expected 4 nodes on the path from 101 to root")
 	for _, n := range path {
-		fmt.Printf("Id: %s. Label: %x\n", n.id, n.label)
+		fmt.Printf("Id: %s. Label: 0x%x\n", n.id, n.label)
 	}
 
 	// close the reader when we are done with it

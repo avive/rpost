@@ -34,17 +34,7 @@ type merkleTree struct {
 	r        IStoreReader // merkle tree store reader
 }
 
-func (mt *merkleTree) Close() error {
-	if mt.r != nil {
-		err := mt.r.Close()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// n - merkle tree size leaves = 2^n
+// n - merkle tree size = 2^n
 func NewMerkleTreeReader(fileName string, l uint, n uint, h hashing.HashFunc) (IMerkleTreeReader, error) {
 
 	r, err := NewTreeStoreReader(fileName, n)
@@ -165,4 +155,15 @@ func (mt *merkleTree) write(nodeId string) ([]byte, error) {
 	digest := mt.h.Hash(leftNodeValue, rightNodeValue)
 	mt.w.Write(Identifier(nodeId), digest)
 	return digest, nil
+}
+
+// Close the reader if it is open
+func (mt *merkleTree) Close() error {
+	if mt.r != nil {
+		err := mt.r.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
