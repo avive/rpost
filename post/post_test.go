@@ -11,9 +11,7 @@ import (
 )
 
 func TestPostGeneration(t *testing.T) {
-
-	generatePost(t, 4, 20, "post1.bin", "merkle1.bin")
-
+	generatePost(t, 10, 20, "post1.bin", "merkle1.bin")
 }
 
 // n - Table size T = 2^n

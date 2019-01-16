@@ -13,7 +13,7 @@ type sha256Hash struct {
 	emptySlice []byte
 }
 
-// Returns a new HashFunc Hx() for commitment X
+// Returns a new HashFunc Hx() for commitment x
 func NewHashFunc(x []byte) HashFunc {
 
 	// todo: pick iter value form params
