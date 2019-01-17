@@ -13,7 +13,7 @@ import (
 const K = post.K
 
 type Prover interface {
-	Prove(challenge []byte) Proof
+	Prove(challenge []byte) (*Proof, error)
 }
 
 type Proof struct {
@@ -55,7 +55,7 @@ func NewProver(id []byte, n uint64, l uint, h hashing.HashFunc, storeFile string
 	return prover, nil
 }
 
-func (p *prover) Prove(challenge []byte) Proof {
+func (p *prover) Prove(challenge []byte) (*Proof, error) {
 
 	// implements the prover proof phase described in page 9 of the paper
 
@@ -75,7 +75,7 @@ func (p *prover) Prove(challenge []byte) Proof {
 
 	var mpj post.MerklePaths
 
-	// compute mask for calculating pathProbe < phi
+	// compute big int mask for pathProbe < phi calculations
 	phi := float64(K) / float64(T.Uint64())
 	diff := util.GetDifficulty(phi)
 	mask := util.GetMask(32, diff)
@@ -94,7 +94,10 @@ func (p *prover) Prove(challenge []byte) Proof {
 
 			// read merkle paths
 			mpj = p.mr.ReadMerklePaths(indices)
-			pathProbe := p.computePathProbe(indices, mpj)
+			pathProbe, err := p.computePathProbe(indices, mpj)
+			if err != nil {
+				return nil, err
+			}
 
 			if pathProbe.Cmp(mask) == -1 {
 				break
@@ -105,9 +108,36 @@ func (p *prover) Prove(challenge []byte) Proof {
 		nonces[j] = nonce
 	}
 
-	return Proof{nonces, mpaths}
+	return &Proof{nonces, mpaths}, nil
 }
 
-func (p *prover) computePathProbe(indices []*big.Int, mpj post.MerklePaths) *big.Int {
-	return nil
+func (p *prover) computePathProbe(indices []*big.Int, mpj post.MerklePaths) (*big.Int, error) {
+
+	data := make([][]byte, len(indices)*2+len(mpj))
+
+	for i := 0; i < K; i++ {
+		data[i*2] = indices[i].Bytes()
+
+		// read the data from the store
+		buff, err := p.sr.ReadBytes(indices[i].Uint64())
+		if err != nil {
+			return nil, err
+		}
+		data[i*2+1] = buff
+	}
+
+	idx := K*2 + 2
+
+	var buf []byte
+	for _, path := range mpj {
+		for _, node := range path {
+			buf = append(buf, node.Label...)
+		}
+		data[idx] = buf
+		idx += 1
+	}
+
+	digest := new(big.Int).SetBytes(p.h.HashSlices(data))
+
+	return digest, nil
 }

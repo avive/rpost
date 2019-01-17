@@ -28,6 +28,17 @@ func NewHashFunc(x []byte) HashFunc {
 //}
 
 // Hash implements Hx()
+func (h *sha256Hash) HashSlices(data [][]byte) []byte {
+	h.hash.Reset()
+	h.hash.Write(h.x)
+	for _, d := range data {
+		_, _ = h.hash.Write(d)
+	}
+
+	return h.hash.Sum([]byte{})
+}
+
+// Hash implements Hx()
 func (h *sha256Hash) Hash(data ...[]byte) []byte {
 	h.hash.Reset()
 	h.hash.Write(h.x)

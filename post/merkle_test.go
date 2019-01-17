@@ -72,7 +72,7 @@ func testMerkleStore(t *testing.T, n uint64, l uint, postFileName string, merkle
 	assert.NoError(t, err)
 	assert.Equal(t, len(path), 4, "expected 4 nodes on the path from 101 to root")
 	for _, n := range path {
-		fmt.Printf("Id: %s. Label: 0x%x\n", n.id, n.label)
+		fmt.Printf("Id: %s. Label: 0x%x\n", n.Id, n.Label)
 	}
 
 	// close the reader when we are done with it

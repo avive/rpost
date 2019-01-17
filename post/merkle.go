@@ -21,8 +21,8 @@ type MerkleTreeReader interface {
 }
 
 type Node struct {
-	id    Identifier
-	label Label
+	Id    Identifier
+	Label Label
 }
 
 type MerklePath []Node
@@ -70,7 +70,7 @@ func NewMerkleTreeWriter(psr StoreReader, fileName string, l uint, n uint,
 	return res, nil
 }
 
-// for table index in indices, return the merkle path from the node at that index to the root
+// for each table index in indices, return the merkle path from the node at that index to the root
 func (mt *merkleTree) ReadMerklePaths(indices []*big.Int) MerklePaths {
 	/*
 		mps := make(MerklePaths, len(indices))
