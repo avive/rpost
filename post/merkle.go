@@ -3,6 +3,7 @@ package post
 import (
 	"github.com/avive/rpost/bstring"
 	"github.com/avive/rpost/hashing"
+	"math/big"
 )
 
 const (
@@ -14,7 +15,8 @@ type MerkleTreeWriter interface {
 }
 
 type MerkleTreeReader interface {
-	ReadPath(id Identifier) ([]Node, error) // Returns the path from a node identified by id to the root node
+	ReadPath(id Identifier) (MerklePath, error) // Returns the path from a node identified by id to the root node
+	ReadMerklePaths(indices []*big.Int) MerklePaths
 	Close() error
 }
 
@@ -22,6 +24,9 @@ type Node struct {
 	id    Identifier
 	label Label
 }
+
+type MerklePath []Node
+type MerklePaths []MerklePath
 
 type merkleTree struct {
 	fileName string           // merkle tree data file full path and name
@@ -65,11 +70,21 @@ func NewMerkleTreeWriter(psr StoreReader, fileName string, l uint, n uint,
 	return res, nil
 }
 
+// for table index in indices, return the merkle path from the node at that index to the root
+func (mt *merkleTree) ReadMerklePaths(indices []*big.Int) MerklePaths {
+	/*
+		mps := make(MerklePaths, len(indices))
+		for index := range indices {
+
+		}*/
+	return nil
+}
+
 // Returns the nodes on the path from a node identified by id to the root inclusive
-func (mt *merkleTree) ReadPath(id Identifier) ([]Node, error) {
+func (mt *merkleTree) ReadPath(id Identifier) (MerklePath, error) {
 
 	items := len(id) + 1
-	res := make([]Node, items)
+	res := make(MerklePath, items)
 	path := id
 
 	for i := 0; i < items; i++ {

@@ -2,15 +2,39 @@ package util
 
 import (
 	"crypto/rand"
+	"encoding/binary"
 	"github.com/Workiva/go-datastructures/bitarray"
 	"github.com/stretchr/testify/assert"
 	"math"
 	"math/big"
+	"math/bits"
 	"strings"
 	"testing"
 )
 
 // POST math utils funcs
+
+// Get big-endian bytes encoding of i
+// Result is 1 to 8 bytes long. 0x0 bytes is returned for 0
+func EncodeToBytes(i uint64) []byte {
+	if i == 0 {
+		return []byte{0x0}
+	}
+
+	iBuf := make([]byte, 8)
+	binary.BigEndian.PutUint64(iBuf, i)
+
+	// bits needed to encode i
+	l := bits.Len64(i)
+
+	// bytes needed to encode i
+	lb := l / 8
+	if l%8 != 0 {
+		lb += 1 // one more byte needed for the extra bits
+	}
+
+	return iBuf[8-lb:]
+}
 
 // Get the bool value of the nth bit of a value of a byte
 // bit is defined from right to left so the LSB bit is at 0 and the MSB it is at 7.
@@ -65,7 +89,7 @@ func GetMaxNonce(l int) *big.Int {
 	return n
 }
 
-// Returns a an int representing l 1 bits.
+// Returns an int representing l bits set to 1
 func GetSimpleMask(l uint) *big.Int {
 	mask := big.NewInt(0)
 	for x := 0; x < int(l); x++ {
@@ -88,12 +112,14 @@ func GetMask(l uint, c uint) *big.Int {
 }
 
 // Get the prob (0...1) of a difficulty param l
+// p := 1 / 2^l
 func GetProbability(l uint) float64 {
-	r := 100.0
-	for i := uint(0); i < l; i++ {
-		r = r / 2
-	}
-	return r / 100
+	return 1.0 / math.Pow(2.0, float64(l))
+}
+
+// solve for l the equation: p := 1 / 2^ l
+func GetDifficulty(p float64) uint {
+	return uint(math.Ceil(math.Log2(1.0 / p)))
 }
 
 // clear the l msb bits of data considered as a big endian int
@@ -107,9 +133,9 @@ func clearMsbBits(l uint, data []byte) *big.Int {
 	return z
 }
 
-// test helper - generate n random bytes
-func Rnd(t *testing.T, length uint) []byte {
-	res := make([]byte, length)
+// test helper - generate l random bytes
+func Rnd(t *testing.T, l uint) []byte {
+	res := make([]byte, l)
 	_, err := rand.Read(res)
 	assert.NoError(t, err)
 	return res

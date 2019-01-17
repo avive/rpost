@@ -11,11 +11,16 @@ go build
 ```
 
 ## Features
+- [ ] Implement the protocol - store, prove and verify
+  - [x] Store
+  - [ ] Prove
+  - [ ] Verify
 - [x] Optimal store size
 - [x] Support all paper params
-- [x] Fast random access of data from store (bit-level)
+- [x] Fast random-access of data from store (bit-level)
 - [x] Table generation and validity tests
-- [ ] Merkle tree generation and store 
+- [x] Tests using in-memory table data
+- [x] Optimal Merkle tree generation and store 
 - [ ] Real-world test scenarios
 
 ## Testing

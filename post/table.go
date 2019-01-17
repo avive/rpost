@@ -1,7 +1,6 @@
 package post
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"github.com/avive/rpost/hashing"
@@ -9,10 +8,6 @@ import (
 	"math"
 	"math/big"
 	"math/bits"
-)
-
-const (
-	K = 256 // this can't be modified and is set as it needs to be the same as the bit length of the output of sha256()
 )
 
 type Table struct {
@@ -90,6 +85,9 @@ func (t *Table) Generate(returnData bool) ([]uint64, error) {
 	p := util.GetProbability(t.l)
 	fmt.Printf("Difficulty p: %.30f\n", p)
 
+	l1 := util.GetDifficulty(p)
+	fmt.Printf("Difficulty l: %d\n", l1)
+
 	fmt.Printf("Expected hashes to find a digest is at least %d hash ops\n", int(1/p))
 
 	maxNonceVal := big.NewInt(int64(math.Ceil(K / p)))
@@ -109,7 +107,6 @@ func (t *Table) Generate(returnData bool) ([]uint64, error) {
 	m := util.GetMask(32, t.l)
 	fmt.Printf("Mask : %s\n", m.String())
 
-	iBuf := make([]byte, 10)
 	nonce := big.NewInt(0)
 	d := new(big.Int)
 
@@ -119,11 +116,13 @@ func (t *Table) Generate(returnData bool) ([]uint64, error) {
 
 		// nonce is in {0,1}^log(k/p) - max nonce value is k/p
 		nonce = nonce.SetUint64(0)
-		ln := binary.PutUvarint(iBuf, i)
+
+		// big endian variable size buffer of i
+		iBuf := util.EncodeToBytes(i)
 
 		for {
 
-			digest := t.h.Hash(iBuf[:ln], nonce.Bytes())
+			digest := t.h.Hash(iBuf, nonce.Bytes())
 			d = d.SetBytes(digest)
 
 			if d.Cmp(m) == -1 { // H(id, i, x) < p

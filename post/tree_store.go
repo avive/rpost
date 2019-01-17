@@ -11,8 +11,6 @@ import (
 // A simple known-size full binary tree (such as a Merkle tree) store
 
 const (
-	W             = 256         // label length in bits
-	WB            = 32          // W length in bytes
 	buffSizeBytes = 1024 * 1024 // Write buffer size
 )
 
