@@ -16,7 +16,7 @@ type MerkleTreeWriter interface {
 
 type MerkleTreeReader interface {
 	ReadProof(id Identifier) (MerkleProof, error) // Returns the path from a node identified by id to the root node
-	ReadProofs(indices []*big.Int, n uint64) (MerkleProofs, error)
+	ReadProofs(indices []*big.Int) (MerkleProofs, error)
 	Close() error
 }
 
@@ -71,15 +71,13 @@ func NewMerkleTreeWriter(psr StoreReader, fileName string, l uint, n uint,
 }
 
 // for each store table idx in indices, return the Merkle path from the node at that index to the merkle tree root
-func (mt *merkleTree) ReadProofs(indices []*big.Int, n uint64) (MerkleProofs, error) {
+func (mt *merkleTree) ReadProofs(indices []*big.Int) (MerkleProofs, error) {
 
 	mps := make(MerkleProofs, len(indices))
 
 	for idx, data := range indices {
-		// n -> T = 2^n leaves
-		// k - merkle tree height. Leaves: 2^(n-1) -> height := n -1
 
-		bn, err := mt.f.NewBinaryStringFromInt(data.Uint64()>>1, uint(n-1))
+		bn, err := mt.f.NewBinaryStringFromInt(data.Uint64(), mt.n + 1)
 		if err != nil {
 			return nil, err
 		}
@@ -95,19 +93,41 @@ func (mt *merkleTree) ReadProofs(indices []*big.Int, n uint64) (MerkleProofs, er
 	return mps, nil
 }
 
-// Returns the sibling nodes on the path from a node identified by id to the root
+// Returns the sibling nodes on the path from a store node identified by id to the root
+// First node will be a data leaf which is not part of the merkle three
+// That node is the sibling of data node identified with id
+// id - identifier of the data node of the proof
+// n - data size T=2^n
 func (mt *merkleTree) ReadProof(id Identifier) (MerkleProof, error) {
 
 	// fmt.Printf("Create merkle proof for node id: %s\n", id)
 	res := make(MerkleProof, len(id))
+
 	currNodeId, err := mt.f.NewBinaryString(string(id))
 	if err != nil {
 		return nil, err
 	}
 
-	// fmt.Printf("Getting siblings for %s\n", currNodeId.GetStringValue())
+	// first we need to add the data node sibling to the proof
+	sibNodeId, err := currNodeId.FlipLSB()
+	if err != nil {
+		return nil, err
+	}
 
-	nodeIds, err := currNodeId.GetBNSiblings(false)
+	readIdx := sibNodeId.GetValue()
+
+	siblingNodeValue, err := mt.psr.ReadBytes(readIdx)
+	res[0] = Node{Identifier(sibNodeId.GetStringValue()), siblingNodeValue}
+
+	// n -> T = 2^n leaves
+	// k - merkle tree height. Leaves: 2^(n-1) -> height := n -1
+
+	merkleLeafId, err := mt.f.NewBinaryStringFromInt(currNodeId.GetValue()>>1, mt.n)
+	if err != nil {
+		return nil, err
+	}
+
+	nodeIds, err := merkleLeafId.GetBNSiblings(false)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +144,7 @@ func (mt *merkleTree) ReadProof(id Identifier) (MerkleProof, error) {
 			return nil, err
 		}
 
-		res[i] = Node{idx, l}
+		res[i+1] = Node{idx, l}
 	}
 
 	return res, nil

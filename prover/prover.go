@@ -66,6 +66,7 @@ func (p *prover) Prove(challenge []byte) (*Proof, error) {
 	temp := new(big.Int)
 
 	// hold K merkle paths. e.g. Phi(decommit(i))
+
 	mpaths := make([]post.MerkleProofs, K)
 
 	// compute big int mask for pathProbe < phi calculations
@@ -100,7 +101,7 @@ func (p *prover) Prove(challenge []byte) (*Proof, error) {
 			// read merkle paths from the data at indices
 			// fmt.Printf("Reading proofs...\n")
 
-			mpj, err := p.mr.ReadProofs(indices, p.n)
+			mpj, err := p.mr.ReadProofs(indices)
 			if err != nil {
 				return nil, err
 			}

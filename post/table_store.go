@@ -1,7 +1,6 @@
 package post
 
 import (
-	"encoding/binary"
 	"errors"
 	"github.com/Workiva/go-datastructures/bitarray"
 	"github.com/avive/rpost/util"
@@ -104,11 +103,8 @@ func (s *store) ReadBytes(idx uint64) ([]byte, error) {
 		return nil, err
 	}
 
-	buf := make([]byte, binary.MaxVarintLen64)
-	n := binary.PutUvarint(buf, v)
-	res := buf[:n]
+	return util.EncodeToBytes(v), nil
 
-	return res, nil
 }
 
 // Read s.n bits at index idx from the store

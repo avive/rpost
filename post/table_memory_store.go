@@ -1,8 +1,8 @@
 package post
 
 import (
-	"encoding/binary"
 	"github.com/Workiva/go-datastructures/bitarray"
+	"github.com/avive/rpost/util"
 )
 
 // a simple in-ram post data store implementing StoreReader
@@ -37,9 +37,6 @@ func (ms *MemoryStore) ReadBytes(idx uint64) ([]byte, error) {
 		return nil, err
 	}
 
-	buf := make([]byte, binary.MaxVarintLen64)
-	n := binary.PutUvarint(buf, v)
-	res := buf[:n]
+	return util.EncodeToBytes(v), nil
 
-	return res, nil
 }

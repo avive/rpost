@@ -14,7 +14,7 @@ import (
 )
 
 func TestProver(t *testing.T) {
-	testProver(t, 11, 14, "post1.bin", "merkle1.bin")
+	testProver(t, 9, 12, "post1.bin", "merkle1.bin")
 }
 
 // n - Table size T = 2^n
@@ -53,7 +53,6 @@ func testProver(t *testing.T, n uint64, l uint, postFileName string, merkleFileN
 	assert.NoError(t, err)
 
 	fmt.Printf("Merkle commitment: 0x%x \n", comm)
-
 
 	// Generate a proof for a challenge
 
