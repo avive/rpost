@@ -65,8 +65,8 @@ func testMerkleStore(t *testing.T, n uint64, l uint, postFileName string, merkle
 	assert.EqualValues(t, comm, comm1, "expected same commitment for same data")
 
 	// test reading proofs from the merkle tree
-	/*
-	mr, err := NewMerkleTreeReader(mf, l, uint(n-1), h)
+
+	mr, err := NewMerkleTreeReader(sr, mf, l, uint(n-1), h)
 	assert.NoError(t, err)
 
 	path, err := mr.ReadProof("101")
@@ -79,5 +79,5 @@ func testMerkleStore(t *testing.T, n uint64, l uint, postFileName string, merkle
 	// close the reader when we are done with it
 	err = mr.Close()
 	assert.NoError(t, err)
-	*/
+
 }

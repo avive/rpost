@@ -36,7 +36,7 @@ func NewProver(id []byte, n uint64, l uint, h hashing.HashFunc, storeFile string
 		return nil, err
 	}
 
-	mr, err := post.NewMerkleTreeReader(merkleFile, l, uint(n-1), h)
+	mr, err := post.NewMerkleTreeReader(sr, merkleFile, l, uint(n-1), h)
 	if err != nil {
 		return nil, err
 	}

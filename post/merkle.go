@@ -40,7 +40,7 @@ type merkleTree struct {
 }
 
 // n - merkle tree size = 2^n
-func NewMerkleTreeReader(fileName string, l uint, n uint, h hashing.HashFunc) (MerkleTreeReader, error) {
+func NewMerkleTreeReader(psr StoreReader, fileName string, l uint, n uint, h hashing.HashFunc) (MerkleTreeReader, error) {
 
 	r, err := NewTreeStoreReader(fileName, n)
 	if err != nil {
@@ -48,7 +48,7 @@ func NewMerkleTreeReader(fileName string, l uint, n uint, h hashing.HashFunc) (M
 	}
 
 	res := &merkleTree{
-		fileName, l, n, nil, h, bstring.NewSMBinaryStringFactory(), nil, r,
+		fileName, l, n, psr, h, bstring.NewSMBinaryStringFactory(), nil, r,
 	}
 
 	return res, nil
@@ -77,7 +77,7 @@ func (mt *merkleTree) ReadProofs(indices []*big.Int) (MerkleProofs, error) {
 
 	for idx, data := range indices {
 
-		bn, err := mt.f.NewBinaryStringFromInt(data.Uint64(), mt.n + 1)
+		bn, err := mt.f.NewBinaryStringFromInt(data.Uint64(), mt.n+1)
 		if err != nil {
 			return nil, err
 		}
