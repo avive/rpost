@@ -15,8 +15,8 @@ type MerkleTreeWriter interface {
 }
 
 type MerkleTreeReader interface {
-	ReadPath(id Identifier) (MerklePath, error) // Returns the path from a node identified by id to the root node
-	ReadMerklePaths(indices []*big.Int) MerklePaths
+	ReadProof(id Identifier) (MerkleProof, error) // Returns the path from a node identified by id to the root node
+	ReadProofs(indices []*big.Int, n uint64) (MerkleProofs, error)
 	Close() error
 }
 
@@ -25,8 +25,8 @@ type Node struct {
 	Label Label
 }
 
-type MerklePath []Node
-type MerklePaths []MerklePath
+type MerkleProof []Node
+type MerkleProofs []MerkleProof
 
 type merkleTree struct {
 	fileName string           // merkle tree data file full path and name
@@ -70,35 +70,61 @@ func NewMerkleTreeWriter(psr StoreReader, fileName string, l uint, n uint,
 	return res, nil
 }
 
-// for each table index in indices, return the merkle path from the node at that index to the root
-func (mt *merkleTree) ReadMerklePaths(indices []*big.Int) MerklePaths {
-	/*
-		mps := make(MerklePaths, len(indices))
-		for index := range indices {
+// for each store table idx in indices, return the Merkle path from the node at that index to the merkle tree root
+func (mt *merkleTree) ReadProofs(indices []*big.Int, n uint64) (MerkleProofs, error) {
 
-		}*/
-	return nil
-}
+	mps := make(MerkleProofs, len(indices))
 
-// Returns the nodes on the path from a node identified by id to the root inclusive
-func (mt *merkleTree) ReadPath(id Identifier) (MerklePath, error) {
+	for idx, data := range indices {
+		// n -> T = 2^n leaves
+		// k - merkle tree height. Leaves: 2^(n-1) -> height := n -1
 
-	items := len(id) + 1
-	res := make(MerklePath, items)
-	path := id
-
-	for i := 0; i < items; i++ {
-		l, err := mt.r.Read(path)
+		bn, err := mt.f.NewBinaryStringFromInt(data.Uint64()>>1, uint(n-1))
 		if err != nil {
 			return nil, err
 		}
 
-		res[i] = Node{path, l}
-		if len(path) == 0 {
-			break
-		} else {
-			path = path[0 : len(path)-1]
+		path, err := mt.ReadProof(Identifier(bn.GetStringValue()))
+		if err != nil {
+			return nil, err
 		}
+
+		mps[idx] = path
+	}
+
+	return mps, nil
+}
+
+// Returns the sibling nodes on the path from a node identified by id to the root
+func (mt *merkleTree) ReadProof(id Identifier) (MerkleProof, error) {
+
+	// fmt.Printf("Create merkle proof for node id: %s\n", id)
+	res := make(MerkleProof, len(id))
+	currNodeId, err := mt.f.NewBinaryString(string(id))
+	if err != nil {
+		return nil, err
+	}
+
+	// fmt.Printf("Getting siblings for %s\n", currNodeId.GetStringValue())
+
+	nodeIds, err := currNodeId.GetBNSiblings(false)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, nodeId := range nodeIds {
+
+		idx := Identifier(nodeId.GetStringValue())
+
+		// fmt.Printf("Reading merkle node for node id: %s\n", idx)
+
+		l, err := mt.r.Read(idx)
+
+		if err != nil {
+			return nil, err
+		}
+
+		res[i] = Node{idx, l}
 	}
 
 	return res, nil

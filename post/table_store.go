@@ -3,7 +3,6 @@ package post
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"github.com/Workiva/go-datastructures/bitarray"
 	"github.com/avive/rpost/util"
 	"github.com/icza/bitio"
@@ -117,8 +116,8 @@ func (s *store) ReadBytes(idx uint64) ([]byte, error) {
 // We need this for random access into the table when generating a proof for a random challenge...
 func (s *store) Read(idx uint64) (bitarray.BitArray, error) {
 
-	fmt.Printf("File size in bytes: %d...\n", s.sz)
-	fmt.Printf("Reading %d bits entry from store at index %d...\n", s.n, idx)
+	// fmt.Printf("File size in bytes: %d...\n", s.sz)
+	// fmt.Printf("Reading %d bits entry from store at index %d...\n", s.n, idx)
 
 	// First, figure out how many bytes we need to read and in which offset
 	l := s.n / 8
@@ -128,10 +127,10 @@ func (s *store) Read(idx uint64) (bitarray.BitArray, error) {
 	}
 
 	offsetBits := idx * uint64(s.n)
-	fmt.Printf("Bits offset: %d\n", offsetBits)
+	// fmt.Printf("Bits offset: %d\n", offsetBits)
 
 	offsetBytes := offsetBits / 8
-	fmt.Printf("Bytes offset: %d\n", offsetBytes)
+	// fmt.Printf("Bytes offset: %d\n", offsetBytes)
 
 	if offsetBits%8 != 0 && offsetBytes+uint64(l)+1 < s.sz {
 		// we are starting to read before the first data bit so we
@@ -155,7 +154,7 @@ func (s *store) Read(idx uint64) (bitarray.BitArray, error) {
 
 	// offset to read from current byte
 	o := offsetBits % 8
-	fmt.Printf("Initial read offset: %d\n", o)
+	// fmt.Printf("Initial read offset: %d\n", o)
 
 	// current byte in buff to read from
 	byteIdx := 0
