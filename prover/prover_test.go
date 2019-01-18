@@ -3,16 +3,18 @@ package prover
 import (
 	"fmt"
 	"github.com/avive/rpost/hashing"
+	"github.com/avive/rpost/post"
 	"github.com/avive/rpost/util"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestProver(t *testing.T) {
-	testProver(t, 11, 16, "post1.bin", "merkle1.bin")
+	testProver(t, 11, 14, "post1.bin", "merkle1.bin")
 }
 
 // n - Table size T = 2^n
@@ -36,7 +38,7 @@ func testProver(t *testing.T, n uint64, l uint, postFileName string, merkleFileN
 	h := hashing.NewHashFunc(id)
 
 	// Generate a new store table
-	/*
+
 	tbl, err := post.NewTable(id, n, l, h, f)
 	assert.NoError(t, err)
 	_, err = tbl.Generate(false)
@@ -49,8 +51,9 @@ func testProver(t *testing.T, n uint64, l uint, postFileName string, merkleFileN
 	assert.NoError(t, err)
 	comm, err := mw.Write()
 	assert.NoError(t, err)
+
 	fmt.Printf("Merkle commitment: 0x%x \n", comm)
-	*/
+
 
 	// Generate a proof for a challenge
 
@@ -58,7 +61,11 @@ func testProver(t *testing.T, n uint64, l uint, postFileName string, merkleFileN
 
 	challenge := util.Rnd(t, 32)
 
+	t1 := time.Now()
 	proof, err := pv.Prove(challenge)
+	e1 := time.Since(t1)
+	t.Logf("Proof generated in %s seconds.\n", e1)
+
 	assert.NoError(t, err)
 	for i, n := range proof.Nonces {
 		fmt.Printf("[%d] : %d\n", i, n)

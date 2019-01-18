@@ -125,7 +125,7 @@ func (t *Table) Generate(returnData bool) ([]uint64, error) {
 			digest := t.h.Hash(iBuf, nonce.Bytes())
 			d = d.SetBytes(digest)
 
-			if d.Cmp(m) == -1 { // H(id, i, x) < p
+			if d.Cmp(m) <= 0 { // H(id, i, x) < p
 				fmt.Printf("[%d]: Nonce: %d %b. Digest: 0x%x\n", i, nonce.Uint64(), nonce.Uint64(), digest)
 
 				// Take l lsb bits from nonce and decode to uint64
