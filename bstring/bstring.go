@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	cacheSize       = 500
-	lengthCacheSize = 10
+	cacheSize       = 50000
+	lengthCacheSize = 1000
 )
 
 // A BinaryString is an immutable fixed-length binary string

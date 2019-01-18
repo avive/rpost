@@ -70,9 +70,15 @@ func (p *prover) Prove(challenge []byte) (*Proof, error) {
 
 	// compute big int mask for pathProbe < phi calculations
 	phi := float64(K) / float64(T.Uint64())
+
+	fmt.Printf("Probability of finding pathprobe at least: %0.5f\n", phi)
+
 	diff := util.GetDifficulty(phi)
+
+	fmt.Printf("Difficulty (expected # of trials): %d\n", diff)
+
 	mask := util.GetMask(32, diff)
-	// fmt.Printf("Mask : 0x%x\n", mask.Bytes())
+	fmt.Printf("Mask : 0x%x\n", mask.Bytes())
 
 	for j := 0; j < K; j++ {
 		nonce := uint64(0)
@@ -80,7 +86,7 @@ func (p *prover) Prove(challenge []byte) (*Proof, error) {
 		var mpj post.MerkleProofs
 		fmt.Printf("\n%d / %d\n", j, K)
 		for {
-			fmt.Printf(".")
+			fmt.Printf(".\n")
 
 			nonce += 1
 			// fmt.Printf("[%d] Computing indices...\n", nonce)
@@ -106,7 +112,7 @@ func (p *prover) Prove(challenge []byte) (*Proof, error) {
 				return nil, err
 			}
 
-			if pathProbe.Cmp(mask) == -1 {
+			if pathProbe.Cmp(mask) <= 0 {
 				break
 			}
 		}

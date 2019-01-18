@@ -3,16 +3,16 @@ package prover
 import (
 	"fmt"
 	"github.com/avive/rpost/hashing"
-	"github.com/avive/rpost/post"
 	"github.com/avive/rpost/util"
 	"github.com/stretchr/testify/assert"
+	"math/big"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestProver(t *testing.T) {
-	testProver(t, 11, 20, "post1.bin", "merkle1.bin")
+	testProver(t, 11, 16, "post1.bin", "merkle1.bin")
 }
 
 // n - Table size T = 2^n
@@ -28,12 +28,15 @@ func testProver(t *testing.T, n uint64, l uint, postFileName string, merkleFileN
 	mf := filepath.Join(currFolder, merkleFileName)
 
 	// Initial commitment
-	id := util.Rnd(t, 32)
+	//id := util.Rnd(t, 32)
+	seed, _ := new(big.Int).SetString("3b05a45e418666973c19aaccdf2547ba8d33e9610f547b31a0735d95d45469b5", 16)
+	id := seed.Bytes()
 
 	// H(id) to be used for iPoW
 	h := hashing.NewHashFunc(id)
 
 	// Generate a new store table
+	/*
 	tbl, err := post.NewTable(id, n, l, h, f)
 	assert.NoError(t, err)
 	_, err = tbl.Generate(false)
@@ -47,6 +50,7 @@ func testProver(t *testing.T, n uint64, l uint, postFileName string, merkleFileN
 	comm, err := mw.Write()
 	assert.NoError(t, err)
 	fmt.Printf("Merkle commitment: 0x%x \n", comm)
+	*/
 
 	// Generate a proof for a challenge
 
