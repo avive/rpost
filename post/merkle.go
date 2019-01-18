@@ -101,7 +101,7 @@ func (mt *merkleTree) ReadProofs(indices []*big.Int) (MerkleProofs, error) {
 func (mt *merkleTree) ReadProof(id Identifier) (MerkleProof, error) {
 
 	// fmt.Printf("Create merkle proof for node id: %s\n", id)
-	res := make(MerkleProof, len(id))
+	res := make(MerkleProof, len(id)+1)
 
 	currNodeId, err := mt.f.NewBinaryString(string(id))
 	if err != nil {
