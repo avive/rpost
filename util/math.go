@@ -140,3 +140,13 @@ func Rnd(t *testing.T, l uint) []byte {
 	assert.NoError(t, err)
 	return res
 }
+
+// test helper - generate l random bytes
+func Rnd1(l uint) []byte {
+	res := make([]byte, l)
+	_, err := rand.Read(res)
+	if err != nil {
+		panic("no entropy")
+	}
+	return res
+}
