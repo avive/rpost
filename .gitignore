@@ -3,5 +3,6 @@
 *.bin
 *.prof
 *.test
+*.out
 vendor/*/
 rpost
