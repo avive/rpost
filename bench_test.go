@@ -55,4 +55,3 @@ func testProver(t *testing.T, n uint64, l uint, postFileName string, merkleFileN
 
 	assert.NoError(t, err)
 }
-

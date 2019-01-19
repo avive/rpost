@@ -14,7 +14,7 @@ import (
 )
 
 func TestProver(t *testing.T) {
-	testProver(t, 10, 10, "post1.bin", "merkle1.bin")
+	testProver(t, 14, 20, "post1.bin", "merkle1.bin")
 }
 
 // n - Table size T = 2^n

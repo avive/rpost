@@ -25,6 +25,7 @@ type prover struct {
 	mr post.MerkleTreeReader // Merkle tree reader can read nodes on the path from an identified nodes the root
 }
 
+// n - size of data store => T=2^n
 func NewProver(id []byte, n uint64, l uint, h hashing.HashFunc, storeFile string, merkleFile string) (Prover, error) {
 
 	if n < 9 {
@@ -36,6 +37,7 @@ func NewProver(id []byte, n uint64, l uint, h hashing.HashFunc, storeFile string
 		return nil, err
 	}
 
+	// merkle tree height is n-1, so |merkle leafs| = 2^(n01)
 	mr, err := post.NewMerkleTreeReader(sr, merkleFile, l, uint(n-1), h)
 	if err != nil {
 		return nil, err

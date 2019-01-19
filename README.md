@@ -11,9 +11,9 @@ go build
 ```
 
 ## Features
-- [ ] Implement the protocol - store, prove and verify
+- [ ] Implement protocols store, prove and verify
   - [x] Store
-  - [ ] Prove
+  - [x] Prove
   - [ ] Verify
 - [x] Optimal store size
 - [x] Support all paper params
@@ -29,7 +29,9 @@ go test ./...
 ```
 
 ## Profiling notes
-- 107.03s total ReadPRoofs()
-- 101.28s in file read syscall
-- 95% of time in file read
-- Total running time gen proof: 2m32s... for n=10, l=10
+
+### Proof runtime profile
+- 107.03s total running time for ReadProofs() - k=256
+    - 103.09s in tree store read
+        - 98.71s spent in file read syscall - ~95%
+        - 4.38s in file indices computation - ~5%

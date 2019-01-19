@@ -8,7 +8,8 @@ import (
 	"os"
 )
 
-// A simple known-size full binary tree (such as a Merkle tree) store
+// A simple known-size full binary tree (such as a Merkle tree) store with fixed-size labels
+// Labels size is WB
 
 const (
 	buffSizeBytes = 1024 * 1024 // Write buffer size
@@ -20,7 +21,7 @@ type Identifier string // A Variable-length binary string. e.g. "0011010" Only 0
 
 // A simple store writer
 // Labels must be written in depth-first order. Random access is not supported
-type IStoreWriter interface {
+type TreeStoreWriter interface {
 	Write(id Identifier, l Label)
 	IsLabelInStore(id Identifier) (bool, error)
 	Reset() error
@@ -31,7 +32,7 @@ type IStoreWriter interface {
 }
 
 // A simple (k,v) reader - fully supports random access
-type IStoreReader interface {
+type TreeStoreReader interface {
 	Read(id Identifier) (Label, error)
 	Size() uint64
 	Close() error
@@ -40,14 +41,14 @@ type IStoreReader interface {
 type treeStore struct {
 	fileName string
 	file     *os.File
-	n        uint // 1 <= n < 64
+	n        uint // 9 <= n < 64
 	f        bstring.BinaryStringFactory
 	bw       *util.Writer
 	c        uint64 // num of labels written to store in this session
 }
 
 // n - binary tree height
-func NewTreeStoreWriter(fileName string, n uint) (IStoreWriter, error) {
+func NewTreeStoreWriter(fileName string, n uint) (TreeStoreWriter, error) {
 	res := &treeStore{
 		fileName: fileName,
 		n:        n,
@@ -63,7 +64,7 @@ func NewTreeStoreWriter(fileName string, n uint) (IStoreWriter, error) {
 	return res, err
 }
 
-func NewTreeStoreReader(fileName string, n uint) (IStoreReader, error) {
+func NewTreeStoreReader(fileName string, n uint) (TreeStoreReader, error) {
 	res := &treeStore{
 		fileName: fileName,
 		n:        n,
@@ -154,6 +155,7 @@ func (d *treeStore) IsLabelInStore(id Identifier) (bool, error) {
 // Returns the label of node id or error if it is not in the store
 func (d *treeStore) Read(id Identifier) (Label, error) {
 
+	// fixed size label
 	label := make(Label, WB)
 
 	// total # of labels written - # of buffered labels == idx of label at buff start
@@ -172,15 +174,18 @@ func (d *treeStore) Read(id Identifier) (Label, error) {
 		return label, err
 	}
 
-	if n == 0 {
-		return label, errors.New("label for id is not in store")
+	if n != WB {
+		return label, errors.New("failed to read WB bytes from store at provided offset")
 	}
 
 	return label, nil
 }
 
-// Returns the file offset for a node id
+// Returns the bytes file offset for a node id i
 func (d *treeStore) calcFileIndex(id Identifier) (uint64, error) {
+
+	// TODO: this can be heavily optimized and implemented w/o recursion or allocation of binary strings
+
 	s := d.subtreeSize(id)
 	s1, err := d.leftSiblingsSubtreeSize(id)
 	if err != nil {
@@ -189,6 +194,7 @@ func (d *treeStore) calcFileIndex(id Identifier) (uint64, error) {
 
 	idx := s + s1 - 1
 	offset := idx * WB
+
 	//fmt.Printf("Node id %s. Index: %d. Offset: %d\n", id, idx, offset)
 	return offset, nil
 }
@@ -201,7 +207,7 @@ func (d *treeStore) subtreeSize(id Identifier) uint64 {
 	return uint64(math.Pow(2, float64(height+1)) - 1)
 }
 
-// Returns the size of the subtrees rooted at left siblings on the path
+// Returns the total size of the subtrees rooted at left siblings on the path
 // from node id to the root node
 func (d *treeStore) leftSiblingsSubtreeSize(id Identifier) (uint64, error) {
 	bs, err := d.f.NewBinaryString(string(id))
