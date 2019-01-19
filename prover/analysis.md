@@ -25,7 +25,7 @@ Reasoning:
 #### An example
 Let n=20 and k=256.
 - Table has 1,048,576 data entries 
-- 64 expected ops to find a valid path probe
-- Computing `2^n * n * k` we get: 2^14 * 14 * 256 = `5,368,709,120 random access i/o ops`
+- 4096 expected ops to find a valid path probe
+- Computing `2^n * n * k` we get: 2^20 * 20 * 256 = `5,368,709,120 random access i/o ops`
 
 
