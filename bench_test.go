@@ -1,9 +1,9 @@
-package prover
+package main
 
 import (
 	"fmt"
 	"github.com/avive/rpost/hashing"
-	"github.com/avive/rpost/post"
+	"github.com/avive/rpost/prover"
 	"github.com/avive/rpost/util"
 	"github.com/stretchr/testify/assert"
 	"math/big"
@@ -37,27 +37,11 @@ func testProver(t *testing.T, n uint64, l uint, postFileName string, merkleFileN
 	// H(id) to be used for iPoW
 	h := hashing.NewHashFunc(id)
 
-	// Generate a new store table
-
-	tbl, err := post.NewTable(id, n, l, h, f)
-	assert.NoError(t, err)
-	_, err = tbl.Generate(false)
-	assert.NoError(t, err)
-
-	// Generate merkle tree from post store
-	sr, err := post.NewStoreReader(f, l)
-	assert.NoError(t, err)
-	mw, err := post.NewMerkleTreeWriter(sr, mf, l, uint(n), h)
-	assert.NoError(t, err)
-	comm, err := mw.Write()
-	assert.NoError(t, err)
-	fmt.Printf("Merkle commitment: 0x%x \n", comm)
-
 	// Generate a proof for a challenge
 
-	pv, err := NewProver(id, n, l, h, f, mf)
+	pv, err := prover.NewProver(id, n, l, h, f, mf)
 
-	challenge := util.Rnd(t, 32)
+	challenge := util.Rnd1(32)
 
 	t1 := time.Now()
 	proof, err := pv.Prove(challenge)
@@ -71,3 +55,4 @@ func testProver(t *testing.T, n uint64, l uint, postFileName string, merkleFileN
 
 	assert.NoError(t, err)
 }
+
