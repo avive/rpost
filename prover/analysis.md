@@ -5,7 +5,7 @@
 - n := log2 of # of table entries. e.g. T = 2^n 
 - n is also height of merkle proof of store data (incl entrie leaf sibling)
 - p* := prob to find a path probe in a try = k / T = k / 2^n (paper denotation)
-- e := expected # of tries to find a valid path probe = 1 / p* = 2^n / k (paper denotation)
+- e := expected # of tries to find a valid path probe = 1 / p* = 2^n / k (paper denotation). See page 7: Ω(T/k) attempts
 
 
 #### Computing the expected number of random file access read ops
