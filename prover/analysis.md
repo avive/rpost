@@ -6,6 +6,8 @@
 - n is also height of merkle proof of store data (incl entrie leaf sibling)
 - p* := prob to find a path probe in a try = k / T = k / 2^n (paper denotation)
 - e := expected # of tries to find a valid path probe = 1 / p* = 2^n / k (paper denotation). See page 7: Ω(T/k) attempts
+- p := difficulty param in (0,1).
+- l := log2(1/p) - # of bits to store per entry. Can also be viewed as difficulty param
 
 
 #### Computing the expected number of random file access read ops
@@ -23,7 +25,7 @@ Reasoning:
       - for reach `k value` we read `n values` to compute a merkle proof
           
 #### An example
-Let n=20 and k=128.
+Let n=20, l=20 and k=128.
 - Table has 1,048,576 data entries 
 - 8192 expected ops to find a valid path probe
 - Computing `2^n * n * k` we get: 2^20 * 20 * 128 = `2,684,354,560 random access i/o ops`
