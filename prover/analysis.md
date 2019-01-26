@@ -22,10 +22,8 @@ Reasoning:
     - In each `e iteration` we`read k values` from the data store 
       - for reach `k value` we read `n values` to compute a merkle proof
           
-#### An example
-Let n=20 and k=256.
+#### A concrete example
+- Let n=20 and k=256
 - Table has 1,048,576 data entries 
 - 64 expected ops to find a valid path probe
-- Computing `2^n * n * k` we get: 2^14 * 14 * 256 = `5,368,709,120 random access i/o ops`
-
-
+- Computing `2^n * n * k` we get: 2^14 * 14 * 256 = `5,368,709,120 expected random access i/o ops`

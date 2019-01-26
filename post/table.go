@@ -13,13 +13,13 @@ import (
 type Table struct {
 	id []byte           // initial commitment
 	n  uint64           // n param 1 <= n <= 63 - table size is 2^n
-	l  uint             // l param (num of leading 0s for p) := f(p). 1: 50%, 2: 25%, 3:12.5%...
+	l  uint             // l param (num of leading 0s for p) := f(p). 1: 50%, 2: 25%, 3:12.5%... l:= log2(1/p)
 	h  hashing.HashFunc // Hx()
 	s  StoreWriter
 }
 
 // Create a new prover with commitment X and param
-// n:= 1 <= n <= 63
+// n:=  9 <= n <= 63
 // l:= 1 <= l <= 63
 func NewTable(id []byte, n uint64, l uint, h hashing.HashFunc, filePath string) (*Table, error) {
 
@@ -95,7 +95,7 @@ func (t *Table) Generate(returnData bool) ([]uint64, error) {
 
 	fmt.Printf("Commitment x: 0x%x\n", t.id)
 
-	// number of bites to store per hash is ame as l
+	// number of bites to store per hash is same as l
 	//bits := uint(math.Ceil(math.Log2(1 / p))) === t.l
 	fmt.Printf("Number of nonce bits to store : %d\n", t.l)
 	fmt.Printf("Difficulty param : %d\n", t.l)

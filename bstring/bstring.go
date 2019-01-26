@@ -6,12 +6,16 @@ import (
 	"math"
 	"math/big"
 	"strconv"
+	"strings"
 )
 
 const (
 	cacheSize       = 50000
 	lengthCacheSize = 1000
 )
+
+const EmptyString = ""
+
 
 // A BinaryString is an immutable fixed-length binary string
 
@@ -214,7 +218,7 @@ func (s *SMBinaryString) GetStringValue() string {
 
 	if s.d == 0 {
 		// special case - empty binary string
-		return ""
+		return EmptyString
 	}
 
 	// binary string encoding of s.v without any leading 0s
@@ -222,12 +226,20 @@ func (s *SMBinaryString) GetStringValue() string {
 
 	// prepend any leading 0s if needed
 	n := s.d - uint(len(res))
-	for n > 0 {
-		res = "0" + res
-		n--
+	if n == 0 {
+		return res
 	}
 
-	return res
+	// use a string build to prepend 0s
+	var b strings.Builder
+	for n > 0 {
+		b.WriteString("0")
+		n--
+	}
+	// append the values
+	b.WriteString(res)
+
+	return b.String()
 }
 
 // Get the binary value encoded in the string. e.g. 12
