@@ -27,11 +27,3 @@ go build
 ```
 go test ./...
 ```
-
-## Profiling notes
-
-### Proof runtime profile
-- 107.03s total running time for ReadProofs() - k=256
-    - 103.09s in tree store read
-        - 98.71s spent in file read syscall - ~95%
-        - 4.38s in file indices computation - ~5%
